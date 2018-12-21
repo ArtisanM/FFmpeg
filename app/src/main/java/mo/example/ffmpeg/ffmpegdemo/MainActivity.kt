@@ -28,9 +28,9 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == 100) {
             if (grantResults.isNotEmpty()) {
                 val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "forhim.m4a")
-                Log.e("FFmpeg_VideoEditor", "isExist:${file.exists()}  path:${file.absolutePath}")
+                val file2 = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "music.mp3")
 
-                val out = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "forhim_cut.m4a")
+                val out = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "mix.m4a")
                 out.delete()
 
                 val mediaMetadataRetriever = MediaMetadataRetriever()
@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
                 mediaMetadataRetriever.release()
                 Log.e("FFmpeg_VideoEditor", "duration $duration")
 
-                FFmpegCmd.exec("ffmpeg -i ${file.absolutePath} -ss 00:00:00 -t 40 -vsync 2 -c copy ${out.absolutePath}".split(" ").toTypedArray() , duration, object : FFmpegCmd.OnCmdExecListener{
+                val listener = object : FFmpegCmd.OnCmdExecListener {
                     override fun onSuccess() {
                         Log.e("FFmpeg_VideoEditor", "ffmpeg cmd exec success ${out.exists()}")
                     }
@@ -52,7 +52,16 @@ class MainActivity : AppCompatActivity() {
                         Log.e("FFmpeg_VideoEditor", "ffmpeg cmd exec onProgress $progress")
                     }
 
-                })
+                }
+
+                // 裁剪
+//                FFmpegUtil.cropAudio(file, out, 30, 10, listener)
+
+                // 混音
+//                FFmpegUtil.mixAudio(file, file2, out, listener)
+
+                // 拼接
+                FFmpegUtil.concatAudio(out, listener, file, file2)
             }
         }
     }
