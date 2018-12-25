@@ -1,5 +1,6 @@
 package mo.example.ffmpeg.ffmpegdemo
 
+import android.media.MediaMetadataRetriever
 import java.io.File
 import java.util.*
 
@@ -8,8 +9,8 @@ class FFmpegUtil {
     companion object {
 
         /**
-         * startTime: seconds
-         * duration: seconds
+         * startTime: ms
+         * duration: ms
          */
         fun cropAudio(srcFile: File, outputFile: File, startTime: Long, duration: Long, listener: FFmpegCmd.OnCmdExecListener) {
             if (outputFile.exists()) {
@@ -46,6 +47,10 @@ class FFmpegUtil {
             if (outputFile.exists()) {
                 outputFile.delete()
             }
+
+            val mediaMetadataRetriever = MediaMetadataRetriever()
+            var outputFileDuration = 0L
+
             val sb = java.lang.StringBuilder()
             val sb2 = java.lang.StringBuilder()
             for ((index, file) in srcFile.withIndex()) {
@@ -55,14 +60,17 @@ class FFmpegUtil {
                 }
                 sb.append(" -i ${file.absolutePath}")
                 sb2.append("[$index:a]")
+                mediaMetadataRetriever.setDataSource(file.absolutePath)
+                outputFileDuration += mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong()
             }
-            FFmpegCmd.exec(("ffmpeg$sb -vn -vsync 2 -filter_complex $sb2" + "concat=n=${srcFile.size}:v=0:a=1[outa] -map [outa] ${outputFile.absolutePath}").split(" ").toTypedArray() , 0,listener)
+            mediaMetadataRetriever.release()
+            FFmpegCmd.exec(("ffmpeg$sb -vn -vsync 2 -filter_complex $sb2" + "concat=n=${srcFile.size}:v=0:a=1[outa] -map [outa] ${outputFile.absolutePath}").split(" ").toTypedArray() , outputFileDuration,listener)
         }
 
 
 
         private fun formatElapsedTime(time: Long): String {
-            var elapsedSeconds = time
+            var elapsedSeconds = time / 1000
             var hours: Long = 0
             var minutes: Long = 0
             var seconds: Long = 0

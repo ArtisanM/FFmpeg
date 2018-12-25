@@ -7,12 +7,18 @@ public class FFmpegCmd {
     }
 
     private static OnCmdExecListener sOnCmdExecListener;
-    private static long sDuration;
+    private static long sDuration; // ffmpeg需要处理的media outputFile总时长 ms
 
     private static native int exec(int argc, String[] argv);
 
     public static native void exit();
 
+    /**
+     *
+     * @param cmds ffmpeg command
+     * @param duration ms
+     * @param listener callback
+     */
     public static void exec(String[] cmds, long duration, OnCmdExecListener listener) {
         sOnCmdExecListener = listener;
         sDuration = duration;
@@ -26,12 +32,13 @@ public class FFmpegCmd {
     public static void onExecuted(int ret) {
         if (sOnCmdExecListener != null) {
             if (ret == 0) {
-                sOnCmdExecListener.onProgress(sDuration);
+                sOnCmdExecListener.onProgress(1);
                 sOnCmdExecListener.onSuccess();
             } else {
                 sOnCmdExecListener.onFailure();
             }
         }
+        sDuration = 0;
     }
 
     /**
@@ -40,7 +47,7 @@ public class FFmpegCmd {
     public static void onProgress(float progress) {
         if (sOnCmdExecListener != null) {
             if (sDuration != 0) {
-                sOnCmdExecListener.onProgress(progress / (sDuration / 1000) * 0.95f);
+                sOnCmdExecListener.onProgress(progress / (sDuration / 1000f));
             }
         }
     }
