@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun crop(view: View) {
-        FFmpegUtil.cropAudio(file, out, 30 * 1000, 10 * 1000, listener)
+        FFmpegUtil.cropAudio(file, out, 30 * 1000, 10, listener)
     }
 
     fun mix(view: View) {

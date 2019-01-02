@@ -10,7 +10,7 @@ class FFmpegUtil {
 
         /**
          * startTime: ms
-         * duration: ms
+         * duration: s
          */
         fun cropAudio(srcFile: File, outputFile: File, startTime: Long, duration: Long, listener: FFmpegCmd.OnCmdExecListener) {
             if (outputFile.exists()) {
@@ -20,7 +20,7 @@ class FFmpegUtil {
                 listener.onFailure()
                 return
             }
-            FFmpegCmd.exec("ffmpeg -i ${srcFile.absolutePath} -ss ${formatElapsedTime(startTime)} -t $duration -vsync 2 -c copy ${outputFile.absolutePath}".split(" ").toTypedArray() , duration, listener)
+            FFmpegCmd.exec("ffmpeg -i ${srcFile.absolutePath} -ss ${formatElapsedTime(startTime)} -t $duration -vn -vsync 2 ${outputFile.absolutePath}".split(" ").toTypedArray() , duration * 1000, listener)
         }
 
 

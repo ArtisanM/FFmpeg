@@ -4776,6 +4776,12 @@ int ffmpeg_exec(int argc, char **argv)
 
     register_exit(ffmpeg_cleanup);
 
+    if (use_log_report) {
+        av_log_set_callback(ffp_log_callback_report);
+    }else{
+        av_log_set_callback(ffp_log_callback_brief);
+    }
+
     setvbuf(stderr,NULL,_IONBF,0); /* win32 runtime needs this */
 
     av_log_set_flags(AV_LOG_SKIP_REPEATED);
@@ -4817,12 +4823,6 @@ int ffmpeg_exec(int argc, char **argv)
 //         exit_program(1);
 //     }
 
-    if (use_log_report) {
-        av_log_set_callback(ffp_log_callback_report);
-    }else{
-        av_log_set_callback(ffp_log_callback_brief);
-    }
-    
     for (i = 0; i < nb_output_files; i++) {
         if (strcmp(output_files[i]->ctx->oformat->name, "rtp"))
             want_sdp = 0;
