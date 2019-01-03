@@ -23,6 +23,26 @@ class FFmpegUtil {
             FFmpegCmd.exec("ffmpeg -i ${srcFile.absolutePath} -ss ${formatElapsedTime(startTime)} -t $duration -vn -vsync 2 ${outputFile.absolutePath}".split(" ").toTypedArray() , duration * 1000, listener)
         }
 
+        /**
+         * resample file to 44100 kHz, mono, PCM_16BIT
+         */
+        fun resample2wav(srcFile: File, outputFile: File, listener: FFmpegCmd.OnCmdExecListener) {
+            if (outputFile.exists()) {
+                outputFile.delete()
+            }
+            if (!srcFile.exists()) {
+                listener.onFailure()
+                return
+            }
+            //get duration for calc ffmpeg progress
+            val mediaMetadataRetriever = MediaMetadataRetriever()
+            mediaMetadataRetriever.setDataSource(srcFile.absolutePath)
+            val duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() // ms
+            mediaMetadataRetriever.release()
+
+            FFmpegCmd.exec("ffmpeg -i ${srcFile.absolutePath} -ar 44100 -ac 1 -acodec pcm_s16le -vn -vsync 2 ${outputFile.absolutePath}".split(" ").toTypedArray() , duration, listener)
+        }
+
 
         fun mixAudio(srcFile: File, srcFile1:File, outputFile: File, listener: FFmpegCmd.OnCmdExecListener) {
             if (outputFile.exists()) {

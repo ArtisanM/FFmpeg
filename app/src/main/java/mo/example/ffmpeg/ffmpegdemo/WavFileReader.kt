@@ -41,6 +41,7 @@ class WavFileReader {
 
         try {
             val nbytes = mDataInputStream!!.read(buffer, offset, count)
+            Log.e("audiorecorder", "read buffer $nbytes")
             return if (nbytes == -1) {
                 0
             } else nbytes

@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
                 granted = true
 //                val mediaMetadataRetriever = MediaMetadataRetriever()
 //                mediaMetadataRetriever.setDataSource(file.absolutePath)
-//                val duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong()
+//                val duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() // ms
 //                mediaMetadataRetriever.release()
 //                Log.e("FFmpeg_VideoEditor", "duration $duration")
             }

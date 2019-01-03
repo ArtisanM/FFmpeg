@@ -4,10 +4,9 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Environment
-import android.os.SystemClock
 import android.util.Log
-import java.io.File
-import java.io.IOException
+import java.io.*
+import java.util.*
 
 
 class AudioRecorder {
@@ -26,8 +25,10 @@ class AudioRecorder {
 
     private var mCaptureThread: Thread? = null
     private var mIsCaptureStarted = false
-    private var mWavFileWriter: WavFileWriter? = null
-    private var mWavFileReader: WavFileReader? = null
+    //    private var mWavFileWriter: WavFileWriter? = null
+//    private var mWavFileReader: WavFileReader? = null
+    private var output: DataOutputStream? = null
+    private var input: DataInputStream? = null
     private var mAudioPlayer: AudioPlayer? = null
 
     @Volatile
@@ -75,10 +76,17 @@ class AudioRecorder {
         }
 
         // 录音保存为wav
-        val out = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "audio.wav")
+//        val out = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "audio.wav")
+//        out.delete()
+//        mWavFileWriter = WavFileWriter()
+//        mWavFileWriter?.openFile(out.absolutePath, DEFAULT_SAMPLE_RATE,1,16)
+
+        // 录音存为pcm
+        output?.close()
+        output = null
+        val out = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "audio.pcm")
         out.delete()
-        mWavFileWriter = WavFileWriter()
-        mWavFileWriter?.openFile(out.absolutePath, DEFAULT_SAMPLE_RATE,1,16)
+        output = DataOutputStream(FileOutputStream(out))
 
         mAudioRecord!!.startRecording()
 
@@ -116,25 +124,42 @@ class AudioRecorder {
         mIsCaptureStarted = false
         mAudioFrameCapturedListener = null
 
-        mWavFileWriter?.closeFile()
+//        mWavFileWriter?.closeFile()
+        output?.flush()
+        output?.close()
+        output = null
 
         Log.d(TAG, "Stop audio capture success !")
 
 
         Log.d(TAG, "Start play captured audio !")
-        mWavFileReader = WavFileReader()
+//        mWavFileReader = WavFileReader()
+//        mWavFileReader?.openFile(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "audio.wav").absolutePath)
+        input = DataInputStream(FileInputStream(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "audio.pcm").absolutePath))
+
         mAudioPlayer = AudioPlayer()
-        mWavFileReader?.openFile(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "audio.wav").absolutePath)
         mAudioPlayer?.startPlayer()
         Thread(Runnable {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO)
-            val buffer = ByteArray(1024 * 2)
-            while (mWavFileReader?.readData(buffer, 0, buffer.size)!! > 0) {
+            val buffer = ByteArray(mMinBufferSize)
+//            while (mWavFileReader?.readData(buffer, 0, buffer.size)!! > 0) {
+//                mAudioPlayer?.play(buffer, 0, buffer.size)
+//                Arrays.fill(buffer, 0)
+//            }
+//            mAudioPlayer?.stopPlayer()
+//            try {
+//                mWavFileReader?.closeFile()
+//            } catch (e: IOException) {
+//                e.printStackTrace()
+//            }
+            while (input?.read(buffer, 0, buffer.size)!! > 0) {
                 mAudioPlayer?.play(buffer, 0, buffer.size)
+                Arrays.fill(buffer, 0)
             }
             mAudioPlayer?.stopPlayer()
             try {
-                mWavFileReader?.closeFile()
+                input?.close()
+                input = null
             } catch (e: IOException) {
                 e.printStackTrace()
             }
@@ -145,11 +170,8 @@ class AudioRecorder {
     private inner class AudioCaptureRunnable : Runnable {
 
         override fun run() {
-
+            val buffer = ByteArray(mMinBufferSize)
             while (!mIsLoopExit) {
-
-                val buffer = ByteArray(mMinBufferSize)
-
                 val ret = mAudioRecord!!.read(buffer, 0, mMinBufferSize)
                 when (ret) {
                     AudioRecord.ERROR_INVALID_OPERATION -> Log.e(TAG, "Error ERROR_INVALID_OPERATION")
@@ -158,13 +180,13 @@ class AudioRecorder {
                         if (mAudioFrameCapturedListener != null) {
                             mAudioFrameCapturedListener!!.onAudioFrameCaptured(buffer)
                         }
-                        //写入wav
-                        mWavFileWriter?.writeData(buffer, 0, buffer.size)
+//                        //写入wav
+//                        mWavFileWriter?.writeData(buffer, 0, buffer.size)
+                        output?.write(buffer, 0, buffer.size)
                         Log.d(TAG, "OK, Captured $ret bytes !")
                     }
                 }
-
-                SystemClock.sleep(10)
+                Arrays.fill(buffer, 0)
             }
         }
     }

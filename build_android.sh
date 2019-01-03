@@ -2,7 +2,7 @@
 
 # ndk版本r17c   ffmpeg 4.0  ffmpeg源码需要修改才能编译通过： aaccoder.c里的B0改为b0   libavcodec/hevc_mvs.c中的B0改为b0  libavcodec/opus_pvq.c中的B0改为b0
 
-# ndk环境    
+# ndk环境
 export NDK=/Users/mo/Documents/work/Android/ndk
 export SYSROOT=$NDK/platforms/android-18/arch-arm
 export TOOLCHAIN=$NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64
@@ -64,7 +64,7 @@ function build_android
         --enable-small \
         --enable-muxer=mp3,wav,adts,ipod \
         --enable-demuxer=aac,ac3,amr*,pcm*,flac,eac3,mp3,wav \
-        --enable-encoder=aac \
+        --enable-encoder=aac,pcm_s16le \
         --enable-decoder=aac,pcm*,mp3*,adpcm* \
         --enable-decoder=ac3 \
         --enable-decoder=alac \
