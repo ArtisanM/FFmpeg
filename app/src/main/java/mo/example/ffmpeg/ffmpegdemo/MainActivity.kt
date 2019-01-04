@@ -11,8 +11,8 @@ import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
+import fm.qingting.audioeditor.FFmpegUtil
 import java.io.File
-
 
 
 class MainActivity : AppCompatActivity() {
@@ -21,10 +21,12 @@ class MainActivity : AppCompatActivity() {
 
     private val mediaPlayer = MediaPlayer()
     private val audioRecord = AudioRecorder()
-    private val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RightNow.mp3")
-    private val file2 = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "少一点天分.mp3")
+    private val file =
+        File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RightNow.mp3")
+    private val file2 =
+        File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "少一点天分.mp3")
     private val out = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "mix.m4a")
-    private val listener = object : FFmpegCmd.OnCmdExecListener {
+    private val listener = object : fm.qingting.audioeditor.FFmpegCmd.OnCmdExecListener {
         override fun onSuccess() {
             Log.e("FFmpeg_VideoEditor", "ffmpeg cmd exec success ${out.exists()}")
         }
@@ -43,7 +45,30 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO),100)
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO),
+            100
+        )
+
+        val wav = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RightNow.wav")
+//        val audioTrack = Track(wav)
+//        audioTrack.play()
+//
+//        val seekBar: SeekBar = findViewById(R.id.seekbar)
+//        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+//            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+//            }
+//
+//            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+//            }
+//
+//            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+//                var fl = (progress / 100f) * 2
+//                audioTrack.setVolume(fl)
+//            }
+//
+//        })
     }
 
     fun crop(view: View) {

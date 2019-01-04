@@ -1,11 +1,23 @@
 *.iml
+*.ipr
+*.iws
+*.hprof
+.idea/*
+!.idea/codeStyles/
 .gradle
-/local.properties
-/.idea/caches/build_file_checksums.ser
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
+local.properties
+gradle.properties
+build
+captures/
+.project
+.classpath
+.settingsgit
+app/release
+
+### Gradle ###
+gradle/
+gradlew
+gradlew.bat
+
+### Mac OSX ###
 .DS_Store
-/build
-/captures
-.externalNativeBuild

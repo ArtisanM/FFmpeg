@@ -1,11 +1,20 @@
 package mo.example.ffmpeg.ffmpegdemo
 
-import android.media.AudioFormat
 import android.media.AudioRecord
-import android.media.MediaRecorder
 import android.os.Environment
 import android.util.Log
-import java.io.*
+import fm.qingting.audioeditor.AudioPlayer
+import fm.qingting.audioeditor.IAudioRecorder
+import fm.qingting.audioeditor.IAudioRecorder.Companion.DEFAULT_AUDIO_FORMAT
+import fm.qingting.audioeditor.IAudioRecorder.Companion.DEFAULT_CHANNEL_IN_CONFIG
+import fm.qingting.audioeditor.IAudioRecorder.Companion.DEFAULT_SAMPLE_RATE
+import fm.qingting.audioeditor.IAudioRecorder.Companion.DEFAULT_SOURCE
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
 import java.util.*
 
 
@@ -14,14 +23,10 @@ class AudioRecorder {
     companion object {
         private const val TAG = "AudioRecorder"
 
-        private const val DEFAULT_SOURCE = MediaRecorder.AudioSource.MIC
-        private const val DEFAULT_SAMPLE_RATE = 44100 // 兼容性最好
-        private const val DEFAULT_CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO  // CHANNEL_IN_STEREO录出来的全是噪音
-        private const val DEFAULT_AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
     }
 
     private var mAudioRecord: AudioRecord? = null
-    private var mMinBufferSize = 0
+    private var mMinBufferSize = IAudioRecorder.MIN_IN_BUFFER_SIZE
 
     private var mCaptureThread: Thread? = null
     private var mIsCaptureStarted = false
@@ -50,7 +55,7 @@ class AudioRecorder {
 
     fun startCapture(): Boolean {
         return startCapture(
-            DEFAULT_SOURCE, DEFAULT_SAMPLE_RATE, DEFAULT_CHANNEL_CONFIG,
+            DEFAULT_SOURCE, DEFAULT_SAMPLE_RATE, DEFAULT_CHANNEL_IN_CONFIG,
             DEFAULT_AUDIO_FORMAT
         )
     }
@@ -135,7 +140,14 @@ class AudioRecorder {
         Log.d(TAG, "Start play captured audio !")
 //        mWavFileReader = WavFileReader()
 //        mWavFileReader?.openFile(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "audio.wav").absolutePath)
-        input = DataInputStream(FileInputStream(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "audio.pcm").absolutePath))
+        input = DataInputStream(
+            FileInputStream(
+                File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    "audio.pcm"
+                ).absolutePath
+            )
+        )
 
         mAudioPlayer = AudioPlayer()
         mAudioPlayer?.startPlayer()

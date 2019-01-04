@@ -1,0 +1,10 @@
+# ninja log v5
+1	325	0	CMakeFiles/ffmpeg-cmd.dir/src/main/cpp/ffmpeg/ffmpeg_thread.c.o	1c662129d680b991
+1	336	0	CMakeFiles/ffmpeg-cmd.dir/src/main/cpp/ffmpeg/ffmpeg_cmd.c.o	50978690f580a06e
+1	569	0	CMakeFiles/ffmpeg-cmd.dir/src/main/cpp/ffmpeg/ffmpeg_filter.c.o	e83d40389afc257e
+2	702	0	CMakeFiles/ffmpeg-cmd.dir/src/main/cpp/ffmpeg/cmdutils.c.o	92f17a1364c561ee
+0	954	0	CMakeFiles/ffmpeg-cmd.dir/src/main/cpp/ffmpeg/ffmpeg_opt.c.o	cbd1d28d00d5d5a5
+3	1132	0	CMakeFiles/ffmpeg-cmd.dir/src/main/cpp/ffmpeg/ffmpeg.c.o	ad0bc6535390963e
+1133	1209	0	../../../../build/intermediates/cmake/debug/obj/armeabi-v7a/libffmpeg-cmd.so	6ff8e4286f3a2ed3
+4	177	0	CMakeFiles/ffmpeg-cmd.dir/src/main/cpp/ffmpeg/ffmpeg_cmd.c.o	50978690f580a06e
+177	253	0	../../../../build/intermediates/cmake/debug/obj/armeabi-v7a/libffmpeg-cmd.so	6ff8e4286f3a2ed3
