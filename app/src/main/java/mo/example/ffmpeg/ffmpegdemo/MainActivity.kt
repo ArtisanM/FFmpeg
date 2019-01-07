@@ -11,7 +11,9 @@ import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
+import fm.qingting.audioeditor.AudioRecorderImpl
 import fm.qingting.audioeditor.FFmpegUtil
+import fm.qingting.audioeditor.IAudioRecorder
 import java.io.File
 
 
@@ -20,7 +22,7 @@ class MainActivity : AppCompatActivity() {
     private var granted = false
 
     private val mediaPlayer = MediaPlayer()
-    private val audioRecord = AudioRecorder()
+    private var audioRecord: IAudioRecorder = AudioRecorderImpl()
     private val file =
         File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RightNow.mp3")
     private val file2 =
@@ -50,8 +52,6 @@ class MainActivity : AppCompatActivity() {
             arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO),
             100
         )
-
-        val wav = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RightNow.wav")
 //        val audioTrack = Track(wav)
 //        audioTrack.play()
 //
@@ -97,11 +97,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun startRecord(view: View) {
-        if (audioRecord.isCaptureStarted()) {
-            audioRecord.stopCapture()
+        if (audioRecord.isRecording()) {
+            audioRecord.stopRecord()
         } else {
-            audioRecord.startCapture()
+            audioRecord.startRecord()
         }
+    }
+
+    fun pauseRecord(view: View) {
+        if (audioRecord.isRecording()) {
+            audioRecord.pauseRecord()
+        } else {
+            audioRecord.resumeRecord()
+        }
+    }
+
+    fun playRecord(view: View) {
+        audioRecord.getAudio().subscribe({
+            if (mediaPlayer.isPlaying) {
+                mediaPlayer.stop()
+            }
+            mediaPlayer.reset()
+            mediaPlayer.setDataSource(it.absolutePath)
+            mediaPlayer.setOnPreparedListener {
+                it.start()
+            }
+            mediaPlayer.setOnErrorListener { mp, what, extra ->
+                Log.e("FFmpeg_VideoEditor", "mediaPlayer onErrorr  what:$what  extra:$extra")
+                true
+            }
+            mediaPlayer.prepareAsync()
+        }, { t -> t.printStackTrace() })
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -114,6 +140,7 @@ class MainActivity : AppCompatActivity() {
 //                val duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() // ms
 //                mediaMetadataRetriever.release()
 //                Log.e("FFmpeg_VideoEditor", "duration $duration")
+
             }
         }
     }
@@ -128,8 +155,8 @@ class MainActivity : AppCompatActivity() {
     private fun startPlay(uri: Uri) {
         if (mediaPlayer.isPlaying) {
             mediaPlayer.stop()
-            mediaPlayer.reset()
         }
+        mediaPlayer.reset()
         mediaPlayer.setDataSource(this, uri)
         mediaPlayer.setOnPreparedListener {
             it.start()
@@ -145,5 +172,6 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         mediaPlayer.release()
+        audioRecord.release()
     }
 }

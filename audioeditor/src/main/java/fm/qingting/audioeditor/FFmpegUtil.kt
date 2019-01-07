@@ -7,6 +7,31 @@ import java.util.*
 object FFmpegUtil {
 
     /**
+     * 转码
+     */
+    fun convert(srcFile: File, outputFile: File, listener: FFmpegCmd.OnCmdExecListener) {
+        if (outputFile.exists()) {
+            outputFile.delete()
+        }
+        if (!srcFile.exists()) {
+            listener.onFailure()
+            return
+        }
+        //get duration for calc ffmpeg progress
+        val mediaMetadataRetriever = MediaMetadataRetriever()
+        mediaMetadataRetriever.setDataSource(srcFile.absolutePath)
+        val duration =
+            mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() // ms
+        mediaMetadataRetriever.release()
+
+        FFmpegCmd.exec(
+            "ffmpeg -i ${srcFile.absolutePath} -vn -vsync 2 ${outputFile.absolutePath}".split(
+                " "
+            ).toTypedArray(), duration, listener
+        )
+    }
+
+    /**
      * startTime: ms
      * duration: s
      */
@@ -87,6 +112,22 @@ object FFmpegUtil {
         )
     }
 
+    fun pcm2other(srcFile: File, outputFile: File, listener: FFmpegCmd.OnCmdExecListener) {
+        if (outputFile.exists()) {
+            outputFile.delete()
+        }
+        if (!srcFile.exists()) {
+            listener.onFailure()
+            return
+        }
+
+        FFmpegCmd.exec(
+            "ffmpeg -f s16le -ar 44100 -ac 1 -i ${srcFile.absolutePath} ${outputFile.absolutePath}".split(
+                " "
+            ).toTypedArray(), 1000 * srcFile.length() / (IAudioRecorder.DEFAULT_SAMPLE_RATE * 1 * 16 / 8), listener
+        )
+    }
+
 
     fun mixAudio(srcFile: File, srcFile1: File, outputFile: File, listener: FFmpegCmd.OnCmdExecListener) {
         if (outputFile.exists()) {
@@ -126,11 +167,16 @@ object FFmpegUtil {
                 listener.onFailure()
                 return
             }
-            sb.append(" -i ${file.absolutePath}")
+            if (file.absolutePath.endsWith(".pcm")) {
+                sb.append(" -f s16le -ar 44100 -ac 1 -i ${file.absolutePath}")
+                outputFileDuration += 1000 * file.length() / (IAudioRecorder.DEFAULT_SAMPLE_RATE * 1 * 16 / 8)
+            } else {
+                sb.append(" -i ${file.absolutePath}")
+                mediaMetadataRetriever.setDataSource(file.absolutePath)
+                outputFileDuration += mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                    .toLong()
+            }
             sb2.append("[$index:a]")
-            mediaMetadataRetriever.setDataSource(file.absolutePath)
-            outputFileDuration += mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                .toLong()
         }
         mediaMetadataRetriever.release()
         FFmpegCmd.exec(

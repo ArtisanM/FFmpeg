@@ -62,8 +62,8 @@ function build_android
         --enable-static \
         --enable-neon \
         --enable-small \
-        --enable-muxer=mp3,wav,adts,ipod \
-        --enable-demuxer=aac,ac3,amr*,pcm*,flac,eac3,mp3,wav \
+        --enable-muxer=mp3,wav,adts,ipod,mov,mp4 \
+        --enable-demuxer=aac,ac3,amr*,pcm*,flac,eac3,mp3,wav,ape,mov,mpegps \
         --enable-encoder=aac,pcm_s16le \
         --enable-decoder=aac,pcm*,mp3*,adpcm* \
         --enable-decoder=ac3 \
@@ -108,7 +108,6 @@ function build_android
         --enable-filter=acompressor \
         --enable-filter=acontrast \
         --enable-filter=acrossfade \
-        --enable-filter=acrossover \
         --enable-filter=acrusher \
         --enable-filter=sofalizer \
         --enable-filter=ladspa \
