@@ -1,5 +1,7 @@
 package fm.qingting.audioeditor;
 
+import android.util.Log;
+
 public class FFmpegCmd {
 
     static {
@@ -19,10 +21,20 @@ public class FFmpegCmd {
      * @param listener callback
      */
     public static void exec(String[] cmds, long duration, OnCmdExecListener listener) {
+        Log.d("FFmpeg_Editor", printStringArray(cmds));
         sOnCmdExecListener = listener;
         sDuration = duration;
 
         exec(cmds.length, cmds);
+    }
+
+    private static String printStringArray(String[] arr) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : arr) {
+            sb.append(s).append(" ");
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        return sb.toString();
     }
 
     /**

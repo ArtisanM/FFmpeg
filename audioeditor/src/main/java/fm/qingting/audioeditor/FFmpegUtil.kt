@@ -24,11 +24,15 @@ object FFmpegUtil {
             mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() // ms
         mediaMetadataRetriever.release()
 
-        FFmpegCmd.exec(
-            "ffmpeg -i ${srcFile.absolutePath} -vn -vsync 2 ${outputFile.absolutePath}".split(
-                " "
-            ).toTypedArray(), duration, listener
-        )
+        val cmd = CmdList()
+        cmd.add("-i")
+        cmd.add(srcFile.absolutePath)
+        cmd.add("-vn")
+        cmd.add("-vsync")
+        cmd.add("2")
+        cmd.add(outputFile.absolutePath)
+
+        FFmpegCmd.exec(cmd.toTypedArray(), duration, listener)
     }
 
     /**
@@ -49,13 +53,19 @@ object FFmpegUtil {
             listener.onFailure()
             return
         }
-        FFmpegCmd.exec(
-            "ffmpeg -i ${srcFile.absolutePath} -ss ${formatElapsedTime(
-                startTime
-            )} -t $duration -vn -vsync 2 ${outputFile.absolutePath}".split(" ").toTypedArray(),
-            duration * 1000,
-            listener
-        )
+        val cmd = CmdList()
+        cmd.add("-i")
+        cmd.add(srcFile.absolutePath)
+        cmd.add("-ss")
+        cmd.add(formatElapsedTime(startTime))
+        cmd.add("-t")
+        cmd.add(duration.toString())
+        cmd.add("-vn")
+        cmd.add("-vsync")
+        cmd.add("2")
+        cmd.add(outputFile.absolutePath)
+
+        FFmpegCmd.exec(cmd.toTypedArray(), duration * 1000, listener)
     }
 
     /**
@@ -78,13 +88,22 @@ object FFmpegUtil {
             listener.onFailure()
             return
         }
-        FFmpegCmd.exec(
-            "ffmpeg -i ${srcFile.absolutePath} -ss ${formatElapsedTime(
-                startTime
-            )} -t $duration -vn -vsync 2 -c copy ${outputFile.absolutePath}".split(" ").toTypedArray(),
-            duration * 1000,
-            listener
-        )
+
+        val cmd = CmdList()
+        cmd.add("-i")
+        cmd.add(srcFile.absolutePath)
+        cmd.add("-ss")
+        cmd.add(formatElapsedTime(startTime))
+        cmd.add("-t")
+        cmd.add(duration.toString())
+        cmd.add("-vn")
+        cmd.add("-vsync")
+        cmd.add("2")
+        cmd.add("-c")
+        cmd.add("copy")
+        cmd.add(outputFile.absolutePath)
+
+        FFmpegCmd.exec(cmd.toTypedArray(), duration * 1000, listener)
     }
 
     /**
@@ -105,11 +124,21 @@ object FFmpegUtil {
             mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() // ms
         mediaMetadataRetriever.release()
 
-        FFmpegCmd.exec(
-            "ffmpeg -i ${srcFile.absolutePath} -ar 44100 -ac 1 -acodec pcm_s16le -vn -vsync 2 ${outputFile.absolutePath}".split(
-                " "
-            ).toTypedArray(), duration, listener
-        )
+        val cmd = CmdList()
+        cmd.add("-i")
+        cmd.add(srcFile.absolutePath)
+        cmd.add("-ar")
+        cmd.add("44100")
+        cmd.add("-ac")
+        cmd.add("1")
+        cmd.add("-acodec")
+        cmd.add("pcm_s16le")
+        cmd.add("-vn")
+        cmd.add("-vsync")
+        cmd.add("2")
+        cmd.add(outputFile.absolutePath)
+
+        FFmpegCmd.exec(cmd.toTypedArray(), duration, listener)
     }
 
     fun pcm2other(srcFile: File, outputFile: File, listener: FFmpegCmd.OnCmdExecListener) {
@@ -120,12 +149,18 @@ object FFmpegUtil {
             listener.onFailure()
             return
         }
+        val cmd = CmdList()
+        cmd.add("-f")
+        cmd.add("s16le")
+        cmd.add("-ar")
+        cmd.add("44100")
+        cmd.add("-ac")
+        cmd.add("1")
+        cmd.add("-i")
+        cmd.add(srcFile.absolutePath)
+        cmd.add(outputFile.absolutePath)
 
-        FFmpegCmd.exec(
-            "ffmpeg -f s16le -ar 44100 -ac 1 -i ${srcFile.absolutePath} ${outputFile.absolutePath}".split(
-                " "
-            ).toTypedArray(), 1000 * srcFile.length() / (IAudioRecorder.DEFAULT_SAMPLE_RATE * 1 * 16 / 8), listener
-        )
+        FFmpegCmd.exec(cmd.toTypedArray(), 1000 * srcFile.length() / (IAudioRecorder.DEFAULT_SAMPLE_RATE * 1 * 16 / 8), listener)
     }
 
 
@@ -144,11 +179,21 @@ object FFmpegUtil {
             # -map 0:0 选择第一个input的第一个流输出到output的第一个流  -map 1:0 选择第二个input的第一个流输出到output的第一个流
           */
         // -vn drop video stream（include music cover）
-        FFmpegCmd.exec(
-            "ffmpeg -i ${srcFile.absolutePath} -i ${srcFile1.absolutePath} -vsync 2 -vn -filter_complex amix=inputs=2:duration=longest -strict -2 ${outputFile.absolutePath}".split(
-                " "
-            ).toTypedArray(), 0, listener
-        )
+        val cmd = CmdList()
+        cmd.add("-i")
+        cmd.add(srcFile.absolutePath)
+        cmd.add("-i")
+        cmd.add(srcFile1.absolutePath)
+        cmd.add("-vsync")
+        cmd.add("2")
+        cmd.add("-vn")
+        cmd.add("-filter_complex")
+        cmd.add("amix=inputs=2:duration=longest")
+        cmd.add("-strict")
+        cmd.add("-2")
+        cmd.add(outputFile.absolutePath)
+
+        FFmpegCmd.exec(cmd.toTypedArray(), 0, listener)
     }
 
 
@@ -160,30 +205,44 @@ object FFmpegUtil {
         val mediaMetadataRetriever = MediaMetadataRetriever()
         var outputFileDuration = 0L
 
+        val cmd = CmdList()
         val sb = java.lang.StringBuilder()
-        val sb2 = java.lang.StringBuilder()
         for ((index, file) in srcFile.withIndex()) {
             if (!file.exists()) {
                 listener.onFailure()
                 return
             }
             if (file.absolutePath.endsWith(".pcm")) {
-                sb.append(" -f s16le -ar 44100 -ac 1 -i ${file.absolutePath}")
+                cmd.add("-f")
+                cmd.add("s16le")
+                cmd.add("-ar")
+                cmd.add("44100")
+                cmd.add("-ac")
+                cmd.add("1")
+                cmd.add("-i")
+                cmd.add(file.absolutePath)
                 outputFileDuration += 1000 * file.length() / (IAudioRecorder.DEFAULT_SAMPLE_RATE * 1 * 16 / 8)
             } else {
-                sb.append(" -i ${file.absolutePath}")
+                cmd.add("-i")
+                cmd.add(file.absolutePath)
                 mediaMetadataRetriever.setDataSource(file.absolutePath)
                 outputFileDuration += mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                     .toLong()
             }
-            sb2.append("[$index:a]")
+            sb.append("[$index:a]")
         }
         mediaMetadataRetriever.release()
-        FFmpegCmd.exec(
-            ("ffmpeg$sb -vn -vsync 2 -filter_complex $sb2" + "concat=n=${srcFile.size}:v=0:a=1[outa] -map [outa] ${outputFile.absolutePath}").split(
-                " "
-            ).toTypedArray(), outputFileDuration, listener
-        )
+
+        cmd.add("-vn")
+        cmd.add("-vsync")
+        cmd.add("2")
+        cmd.add("-filter_complex")
+        cmd.add("${sb}concat=n=${srcFile.size}:v=0:a=1[outa]")
+        cmd.add("-map")
+        cmd.add("[outa]")
+        cmd.add(outputFile.absolutePath)
+
+        FFmpegCmd.exec(cmd.toTypedArray(), outputFileDuration, listener)
     }
 
     private fun formatElapsedTime(time: Long): String {

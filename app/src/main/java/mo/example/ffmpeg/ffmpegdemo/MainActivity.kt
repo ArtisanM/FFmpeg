@@ -11,10 +11,16 @@ import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
+import android.widget.SeekBar
+import android.widget.TextView
 import fm.qingting.audioeditor.AudioRecorderImpl
 import fm.qingting.audioeditor.FFmpegUtil
 import fm.qingting.audioeditor.IAudioRecorder
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -30,19 +36,22 @@ class MainActivity : AppCompatActivity() {
     private val out = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "mix.m4a")
     private val listener = object : fm.qingting.audioeditor.FFmpegCmd.OnCmdExecListener {
         override fun onSuccess() {
-            Log.e("FFmpeg_VideoEditor", "ffmpeg cmd exec success ${out.exists()}")
+            Log.e("FFmpeg_Editor", "ffmpeg cmd exec success ${out.exists()}")
         }
 
         override fun onFailure() {
-            Log.e("FFmpeg_VideoEditor", "ffmpeg cmd exec failed")
+            Log.e("FFmpeg_Editor", "ffmpeg cmd exec failed")
         }
 
         override fun onProgress(progress: Float) {
-            Log.e("FFmpeg_VideoEditor", "ffmpeg cmd exec onProgress $progress")
+            Log.e("FFmpeg_Editor", "ffmpeg cmd exec onProgress $progress")
         }
 
     }
 
+    private lateinit var seekBar: SeekBar
+    private lateinit var tvCurrent: TextView
+    private lateinit var tvTotal: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,23 +61,30 @@ class MainActivity : AppCompatActivity() {
             arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO),
             100
         )
+        seekBar = findViewById(R.id.seekbar)
+        tvCurrent = findViewById(R.id.current)
+        tvTotal = findViewById(R.id.total)
+
 //        val audioTrack = Track(wav)
 //        audioTrack.play()
 //
 //        val seekBar: SeekBar = findViewById(R.id.seekbar)
-//        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-//            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-//            }
-//
-//            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-//            }
-//
-//            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-//                var fl = (progress / 100f) * 2
-//                audioTrack.setVolume(fl)
-//            }
-//
-//        })
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+            }
+
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    if (mediaPlayer.isPlaying) {
+                        mediaPlayer.seekTo(progress)
+                    }
+                }
+            }
+
+        })
     }
 
     fun crop(view: View) {
@@ -100,6 +116,7 @@ class MainActivity : AppCompatActivity() {
         if (audioRecord.isRecording()) {
             audioRecord.stopRecord()
         } else {
+            audioRecord.setOutputFile(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "m_${System.currentTimeMillis()}.m4a"))
             audioRecord.startRecord()
         }
     }
@@ -113,6 +130,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun playRecord(view: View) {
+        disposable?.dispose()
         audioRecord.getAudio().subscribe({
             if (mediaPlayer.isPlaying) {
                 mediaPlayer.stop()
@@ -120,10 +138,26 @@ class MainActivity : AppCompatActivity() {
             mediaPlayer.reset()
             mediaPlayer.setDataSource(it.absolutePath)
             mediaPlayer.setOnPreparedListener {
+                val duration = it.duration
+                seekBar.max = duration
+                seekBar.progress = it.currentPosition
+                tvCurrent.text = "00:00"
+                tvTotal.text = getDurationString(duration)
+
+                disposable = Observable.interval(0,1, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe({
+                    seekBar.progress = mediaPlayer.currentPosition
+                    tvCurrent.text = getDurationString(seekBar.progress)
+                }, {e -> e.printStackTrace()})
                 it.start()
             }
+            mediaPlayer.setOnCompletionListener {
+                disposable?.dispose()
+                seekBar.progress = mediaPlayer.currentPosition
+                tvCurrent.text = getDurationString(seekBar.progress)
+            }
             mediaPlayer.setOnErrorListener { mp, what, extra ->
-                Log.e("FFmpeg_VideoEditor", "mediaPlayer onErrorr  what:$what  extra:$extra")
+                Log.e("FFmpeg_Editor", "mediaPlayer onErrorr  what:$what  extra:$extra")
+                disposable?.dispose()
                 true
             }
             mediaPlayer.prepareAsync()
@@ -139,7 +173,7 @@ class MainActivity : AppCompatActivity() {
 //                mediaMetadataRetriever.setDataSource(file.absolutePath)
 //                val duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() // ms
 //                mediaMetadataRetriever.release()
-//                Log.e("FFmpeg_VideoEditor", "duration $duration")
+//                Log.e("FFmpeg_Editor", "duration $duration")
 
             }
         }
@@ -152,6 +186,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var disposable: Disposable? = null
+
     private fun startPlay(uri: Uri) {
         if (mediaPlayer.isPlaying) {
             mediaPlayer.stop()
@@ -162,7 +198,7 @@ class MainActivity : AppCompatActivity() {
             it.start()
         }
         mediaPlayer.setOnErrorListener { mp, what, extra ->
-            Log.e("FFmpeg_VideoEditor", "mediaPlayer onErrorr  what:$what  extra:$extra")
+            Log.e("FFmpeg_Editor", "mediaPlayer onErrorr  what:$what  extra:$extra")
             true
         }
         mediaPlayer.prepareAsync()
@@ -173,5 +209,27 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         mediaPlayer.release()
         audioRecord.release()
+    }
+
+    private fun getDurationString(seconds: Int): String {
+        var seconds = seconds / 1000
+
+        val hours = seconds / 3600
+        val minutes = seconds % 3600 / 60
+        seconds = seconds % 60
+
+        return twoDigitString(minutes) + ":" + twoDigitString(seconds)
+    }
+
+    private fun twoDigitString(number: Int): String {
+
+        if (number == 0) {
+            return "00"
+        }
+
+        return if (number / 10 == 0) {
+            "0$number"
+        } else number.toString()
+
     }
 }

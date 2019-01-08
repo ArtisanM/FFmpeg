@@ -43,10 +43,13 @@ interface IAudioRecorder {
 
     fun setOutputFile(file: File)
 
+    /**
+     * release前确保已调用getAudio()完成音频合成及编码
+     */
     fun release()
 
     /**
-     * 获取临时音频，用于试听
+     * 获取音频
      */
     fun getAudio(): Observable<File>
 

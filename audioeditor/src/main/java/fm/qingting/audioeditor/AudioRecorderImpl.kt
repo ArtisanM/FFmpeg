@@ -8,7 +8,6 @@ import io.reactivex.schedulers.Schedulers
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.util.*
 import java.util.concurrent.Executors
 
 class AudioRecorderImpl : IAudioRecorder {
@@ -88,6 +87,7 @@ class AudioRecorderImpl : IAudioRecorder {
                 it.stop()
             }
             it.release()
+            mAudioRecord = null
         }
 
         mOutputStream?.close()
@@ -104,6 +104,13 @@ class AudioRecorderImpl : IAudioRecorder {
             }
             mOutputStream?.close()
             mOutputStream = null
+
+            if (!mOutputTempFile.exists()) {
+                // 已经合成过，暂无未合成数据
+                it.onNext(mOutputFile)
+                it.onComplete()
+                return@create
+            }
 
             val output = File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -166,7 +173,11 @@ class AudioRecorderImpl : IAudioRecorder {
         mWorkThread.shutdown()
         mOutputStream?.close()
         mOutputStream = null
-        mAudioRecord?.release()
+        mAudioRecord?.let {
+            if (it.state != AudioRecord.STATE_UNINITIALIZED) {
+                it.release()
+            }
+        }
         mAudioRecord = null
         mOutputTempFile.delete()
     }
@@ -186,8 +197,7 @@ class AudioRecorderImpl : IAudioRecorder {
                         else -> {
                             if (ret > 0) {
                                 mOnAudioRecordListener?.onAudioFrameCaptured(buffer)
-                                mOutputStream?.write(buffer, 0, buffer.size)
-                                Arrays.fill(buffer, 0)
+                                mOutputStream?.write(buffer, 0, ret)
                             }
                         }
                     }
