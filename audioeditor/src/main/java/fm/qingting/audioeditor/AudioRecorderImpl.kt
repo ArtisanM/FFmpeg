@@ -97,6 +97,18 @@ class AudioRecorderImpl : IAudioRecorder {
 
     }
 
+    override fun toggle() {
+        if (mAudioRecord != null) {
+            if (mIsCaptureStarted) {
+                pauseRecord()
+            } else {
+                resumeRecord()
+            }
+        } else {
+            startRecord()
+        }
+    }
+
     override fun getAudio(): Observable<File> {
         return Observable.create<File> {
             if (mAudioRecord != null && mAudioRecord!!.recordingState == AudioRecord.RECORDSTATE_RECORDING) {

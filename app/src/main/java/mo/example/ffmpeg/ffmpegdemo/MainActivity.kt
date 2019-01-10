@@ -14,6 +14,7 @@ import android.util.Log
 import android.view.View
 import android.widget.SeekBar
 import android.widget.TextView
+import android.widget.Toast
 import fm.qingting.audioeditor.AudioRecorderImpl
 import fm.qingting.audioeditor.FFmpegUtil
 import fm.qingting.audioeditor.IAudioRecorder
@@ -68,7 +69,7 @@ class MainActivity : AppCompatActivity() {
         tvTotal = findViewById(R.id.total)
         wavesfv = findViewById(R.id.wavesfv)
 
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
             }
 
@@ -85,7 +86,7 @@ class MainActivity : AppCompatActivity() {
 
         })
         audioRecord.setOnAudioRecordListener(object : OnAudioRecordListener {
-            override fun onAudioFrameCaptured(audioData: ByteArray, readSize:Int) {
+            override fun onAudioFrameCaptured(audioData: ByteArray, readSize: Int) {
                 wavesfv.addAudioData(audioData, readSize)
             }
         })
@@ -117,21 +118,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun startRecord(view: View) {
-        if (audioRecord.isRecording()) {
-            audioRecord.stopRecord()
-        } else {
-            audioRecord.setOutputFile(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "m_${System.currentTimeMillis()}.m4a"))
-            audioRecord.startRecord()
-        }
+        audioRecord.toggle()
     }
 
-    fun pauseRecord(view: View) {
-        if (audioRecord.isRecording()) {
-            audioRecord.pauseRecord()
-        } else {
-            audioRecord.resumeRecord()
-        }
+    @SuppressLint("CheckResult")
+    fun saveAudio(view: View) {
+        audioRecord.getAudio().observeOn(AndroidSchedulers.mainThread()).subscribe({
+            Toast.makeText(this, "保存成功，文件地址：${it.absolutePath}", Toast.LENGTH_SHORT).show()
+        }, { t ->
+            t.printStackTrace()
+            Toast.makeText(this, "保存失败}", Toast.LENGTH_SHORT).show()
+        })
     }
+
 
     @SuppressLint("CheckResult")
     fun playRecord(view: View) {
@@ -149,10 +148,11 @@ class MainActivity : AppCompatActivity() {
                 tvCurrent.text = "00:00"
                 tvTotal.text = getDurationString(duration)
 
-                disposable = Observable.interval(0,1, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe({
-                    seekBar.progress = mediaPlayer.currentPosition
-                    tvCurrent.text = getDurationString(seekBar.progress)
-                }, {e -> e.printStackTrace()})
+                disposable = Observable.interval(0, 1, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({
+                        seekBar.progress = mediaPlayer.currentPosition
+                        tvCurrent.text = getDurationString(seekBar.progress)
+                    }, { e -> e.printStackTrace() })
                 it.start()
             }
             mediaPlayer.setOnCompletionListener {
@@ -174,7 +174,12 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == 100) {
             if (grantResults.isNotEmpty() && grantResults.size > 1) {
                 granted = true
-
+                audioRecord.setOutputFile(
+                    File(
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                        "m_${System.currentTimeMillis()}.m4a"
+                    )
+                )
             }
         }
     }

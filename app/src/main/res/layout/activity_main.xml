@@ -24,7 +24,7 @@
 
     <Button
         android:id="@+id/record"
-        android:text="开始录音/停止"
+        android:text="开始录音/暂停/继续"
         android:onClick="startRecord"
         app:layout_constraintLeft_toRightOf="@id/play"
         app:layout_constraintTop_toBottomOf="@id/wavesfv"
@@ -33,8 +33,8 @@
 
     <Button
         android:id="@+id/pause"
-        android:text="暂停录音/继续"
-        android:onClick="pauseRecord"
+        android:text="完成"
+        android:onClick="saveAudio"
         app:layout_constraintLeft_toRightOf="@id/record"
         app:layout_constraintTop_toBottomOf="@id/wavesfv"
         android:layout_width="wrap_content"

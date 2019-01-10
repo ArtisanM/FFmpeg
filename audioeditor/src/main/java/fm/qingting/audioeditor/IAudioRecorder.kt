@@ -44,6 +44,11 @@ interface IAudioRecorder {
     fun setOutputFile(file: File)
 
     /**
+     * 根据自身状态自动 开始/暂停/继续
+     */
+    fun toggle()
+
+    /**
      * release前确保已调用getAudio()完成音频合成及编码
      */
     fun release()
