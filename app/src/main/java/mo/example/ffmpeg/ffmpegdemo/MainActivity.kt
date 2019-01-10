@@ -1,6 +1,7 @@
 package mo.example.ffmpeg.ffmpegdemo
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.media.MediaPlayer
@@ -16,6 +17,7 @@ import android.widget.TextView
 import fm.qingting.audioeditor.AudioRecorderImpl
 import fm.qingting.audioeditor.FFmpegUtil
 import fm.qingting.audioeditor.IAudioRecorder
+import fm.qingting.audioeditor.OnAudioRecordListener
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -26,7 +28,6 @@ import java.util.concurrent.TimeUnit
 class MainActivity : AppCompatActivity() {
 
     private var granted = false
-
     private val mediaPlayer = MediaPlayer()
     private var audioRecord: IAudioRecorder = AudioRecorderImpl()
     private val file =
@@ -52,6 +53,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var seekBar: SeekBar
     private lateinit var tvCurrent: TextView
     private lateinit var tvTotal: TextView
+    private lateinit var wavesfv: WaveSurfaceView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,11 +66,8 @@ class MainActivity : AppCompatActivity() {
         seekBar = findViewById(R.id.seekbar)
         tvCurrent = findViewById(R.id.current)
         tvTotal = findViewById(R.id.total)
+        wavesfv = findViewById(R.id.wavesfv)
 
-//        val audioTrack = Track(wav)
-//        audioTrack.play()
-//
-//        val seekBar: SeekBar = findViewById(R.id.seekbar)
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
             }
@@ -84,6 +83,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+        })
+        audioRecord.setOnAudioRecordListener(object : OnAudioRecordListener {
+            override fun onAudioFrameCaptured(audioData: ByteArray, readSize:Int) {
+                wavesfv.addAudioData(audioData, readSize)
+            }
         })
     }
 
@@ -129,6 +133,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("CheckResult")
     fun playRecord(view: View) {
         disposable?.dispose()
         audioRecord.getAudio().subscribe({
@@ -169,11 +174,6 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == 100) {
             if (grantResults.isNotEmpty() && grantResults.size > 1) {
                 granted = true
-//                val mediaMetadataRetriever = MediaMetadataRetriever()
-//                mediaMetadataRetriever.setDataSource(file.absolutePath)
-//                val duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() // ms
-//                mediaMetadataRetriever.release()
-//                Log.e("FFmpeg_Editor", "duration $duration")
 
             }
         }
@@ -209,6 +209,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         mediaPlayer.release()
         audioRecord.release()
+        wavesfv.clearData()
     }
 
     private fun getDurationString(seconds: Int): String {

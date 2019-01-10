@@ -59,7 +59,7 @@ interface IAudioRecorder {
 }
 
 interface OnAudioRecordListener {
-    fun onAudioFrameCaptured(audioData: ByteArray)
+    fun onAudioFrameCaptured(audioData: ByteArray, readSize: Int)
 }
 
 /**

@@ -7,10 +7,17 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <mo.example.ffmpeg.ffmpegdemo.WaveSurfaceView
+        android:id="@+id/wavesfv"
+        android:layout_width="match_parent"
+        android:layout_height="25dp"/>
+
+
     <Button
         android:id="@+id/play"
         android:text="播放文件/停止"
         android:onClick="play"
+        app:layout_constraintTop_toBottomOf="@id/wavesfv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
@@ -20,6 +27,7 @@
         android:text="开始录音/停止"
         android:onClick="startRecord"
         app:layout_constraintLeft_toRightOf="@id/play"
+        app:layout_constraintTop_toBottomOf="@id/wavesfv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
@@ -28,6 +36,7 @@
         android:text="暂停录音/继续"
         android:onClick="pauseRecord"
         app:layout_constraintLeft_toRightOf="@id/record"
+        app:layout_constraintTop_toBottomOf="@id/wavesfv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 

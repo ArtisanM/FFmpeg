@@ -196,7 +196,7 @@ class AudioRecorderImpl : IAudioRecorder {
                         AudioRecord.ERROR_BAD_VALUE -> Log.e(TAG, "Error ERROR_BAD_VALUE")
                         else -> {
                             if (ret > 0) {
-                                mOnAudioRecordListener?.onAudioFrameCaptured(buffer)
+                                mOnAudioRecordListener?.onAudioFrameCaptured(buffer, ret)
                                 mOutputStream?.write(buffer, 0, ret)
                             }
                         }
