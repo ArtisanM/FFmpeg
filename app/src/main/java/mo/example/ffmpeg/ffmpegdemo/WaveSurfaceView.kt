@@ -134,7 +134,7 @@ class WaveSurfaceView(context: Context, attrs: AttributeSet) : SurfaceView(conte
             // 没铺满，因为要从右往左，所以空出MaxBuffSize - buffSize个位置再开始画
             index += mMaxBuffSize - buffSize
         }
-        x = index * mLineWidth + (if (index - 1 >= 0) index - 1 else 0) * mLineSpace
+        x = index * mLineWidth + index * mLineSpace + mLineWidth / 2
         return x
     }
 
