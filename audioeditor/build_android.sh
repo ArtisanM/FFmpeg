@@ -62,7 +62,7 @@ function build_android
         --enable-static \
         --enable-neon \
         --enable-small \
-        --enable-muxer=mp3,wav,adts,ipod,mov,mp4 \
+        --enable-muxer=mp3,wav,adts,ipod,mov,mp4,pcm_s16le \
         --enable-demuxer=aac,ac3,amr*,pcm*,flac,eac3,mp3,wav,ape,mov,mpegps \
         --enable-encoder=aac,pcm_s16le \
         --enable-decoder=aac,pcm*,mp3*,adpcm* \

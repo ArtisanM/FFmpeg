@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var seekBar: SeekBar
     private lateinit var tvCurrent: TextView
     private lateinit var tvTotal: TextView
-    private lateinit var wavesfv: WaveSurfaceView
+    private lateinit var wavesfv: WaveView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,6 +122,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     @SuppressLint("CheckResult")
+    fun goPlay(view: View) {
+        audioRecord.getAudio().observeOn(AndroidSchedulers.mainThread()).subscribe({
+            startActivity(Intent(this, ShiTingActivity::class.java).putExtra("file", it))
+        }, { t ->
+            t.printStackTrace()
+            Toast.makeText(this, "获取音频失败", Toast.LENGTH_SHORT).show()
+        })
+    }
+
+    fun goCrop(view: View) {
+        audioRecord.getAudio().observeOn(AndroidSchedulers.mainThread()).subscribe({
+            val intent = Intent(this, CropActivity::class.java).putExtra("file", it)
+            startActivity(intent)
+        }, { t ->
+            t.printStackTrace()
+            Toast.makeText(this, "获取音频失败", Toast.LENGTH_SHORT).show()
+        })
+    }
+
+
+
+    @SuppressLint("CheckResult")
     fun saveAudio(view: View) {
         audioRecord.getAudio().observeOn(AndroidSchedulers.mainThread()).subscribe({
             Toast.makeText(this, "保存成功，文件地址：${it.absolutePath}", Toast.LENGTH_SHORT).show()
@@ -129,6 +151,14 @@ class MainActivity : AppCompatActivity() {
             t.printStackTrace()
             Toast.makeText(this, "保存失败}", Toast.LENGTH_SHORT).show()
         })
+    }
+
+    fun onClickCached(view: View) {
+        for (file in Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).listFiles()) {
+            if (file.isFile && file.name.startsWith("m_")) {
+                file.delete()
+            }
+        }
     }
 
 

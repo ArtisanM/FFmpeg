@@ -141,6 +141,43 @@ object FFmpegUtil {
         FFmpegCmd.exec(cmd.toTypedArray(), duration, listener)
     }
 
+    /**
+     * resample file to 44100 kHz, mono, PCM_16BIT
+     */
+    fun resample2Pcm(srcFile: File, outputFile: File, listener: FFmpegCmd.OnCmdExecListener) {
+        if (outputFile.exists()) {
+            outputFile.delete()
+        }
+        if (!srcFile.exists()) {
+            listener.onFailure()
+            return
+        }
+        //get duration for calc ffmpeg progress
+        val mediaMetadataRetriever = MediaMetadataRetriever()
+        mediaMetadataRetriever.setDataSource(srcFile.absolutePath)
+        val duration =
+            mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() // ms
+        mediaMetadataRetriever.release()
+
+        val cmd = CmdList()
+        cmd.add("-i")
+        cmd.add(srcFile.absolutePath)
+        cmd.add("-f")
+        cmd.add("s16le")
+        cmd.add("-ar")
+        cmd.add("44100")
+        cmd.add("-ac")
+        cmd.add("1")
+        cmd.add("-acodec")
+        cmd.add("pcm_s16le")
+        cmd.add("-vn")
+        cmd.add("-vsync")
+        cmd.add("2")
+        cmd.add(outputFile.absolutePath)
+
+        FFmpegCmd.exec(cmd.toTypedArray(), duration, listener)
+    }
+
     fun pcm2other(srcFile: File, outputFile: File, listener: FFmpegCmd.OnCmdExecListener) {
         if (outputFile.exists()) {
             outputFile.delete()

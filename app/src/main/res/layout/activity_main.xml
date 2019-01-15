@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <mo.example.ffmpeg.ffmpegdemo.WaveSurfaceView
+    <mo.example.ffmpeg.ffmpegdemo.WaveView
         android:id="@+id/wavesfv"
         android:layout_width="match_parent"
         android:layout_height="25dp"/>
@@ -48,6 +48,24 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <Button
+        android:id="@+id/go_play"
+        android:text="去试听页面"
+        android:onClick="goPlay"
+        app:layout_constraintTop_toBottomOf="@id/play"
+        app:layout_constraintLeft_toRightOf="@id/play_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/go_crop"
+        android:text="去裁剪页面"
+        android:onClick="goCrop"
+        app:layout_constraintTop_toBottomOf="@id/play"
+        app:layout_constraintLeft_toRightOf="@id/go_play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
     <SeekBar
         android:id="@+id/seekbar"
         android:layout_width="match_parent"
@@ -81,38 +99,47 @@
         app:layout_constraintTop_toTopOf="@id/seekbar"
         app:layout_constraintBottom_toBottomOf="@id/seekbar" />
 
-    <Button
-        android:id="@+id/cut"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="裁剪"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/mix"
-        android:onClick="crop"
-        app:layout_constraintVertical_chainStyle="packed"
-        app:layout_constraintTop_toTopOf="parent" />
+    <!--<Button-->
+        <!--android:id="@+id/cut"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="裁剪"-->
+        <!--app:layout_constraintLeft_toLeftOf="parent"-->
+        <!--app:layout_constraintRight_toRightOf="parent"-->
+        <!--app:layout_constraintBottom_toTopOf="@id/mix"-->
+        <!--android:onClick="crop"-->
+        <!--app:layout_constraintVertical_chainStyle="packed"-->
+        <!--app:layout_constraintTop_toTopOf="parent" />-->
+
+    <!--<Button-->
+        <!--android:id="@+id/mix"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="混音"-->
+        <!--app:layout_constraintLeft_toLeftOf="parent"-->
+        <!--app:layout_constraintRight_toRightOf="parent"-->
+        <!--app:layout_constraintBottom_toTopOf="@id/concat"-->
+        <!--android:onClick="mix"-->
+        <!--app:layout_constraintTop_toBottomOf="@id/cut" />-->
+
+    <!--<Button-->
+        <!--android:id="@+id/concat"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="拼接"-->
+        <!--app:layout_constraintLeft_toLeftOf="parent"-->
+        <!--app:layout_constraintRight_toRightOf="parent"-->
+        <!--android:onClick="concat"-->
+        <!--app:layout_constraintTop_toBottomOf="@id/mix"-->
+        <!--app:layout_constraintBottom_toBottomOf="parent" />-->
 
     <Button
-        android:id="@+id/mix"
+        android:id="@+id/clear"
+        android:text="清除缓存"
+        android:onClick="onClickCached"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="混音"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/concat"
-        android:onClick="mix"
-        app:layout_constraintTop_toBottomOf="@id/cut" />
+        android:layout_height="wrap_content" />
 
-    <Button
-        android:id="@+id/concat"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="拼接"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:onClick="concat"
-        app:layout_constraintTop_toBottomOf="@id/mix"
-        app:layout_constraintBottom_toBottomOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
