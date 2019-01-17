@@ -1,5 +1,6 @@
 package mo.example.ffmpeg.ffmpegdemo
 
+import java.nio.ByteBuffer
 import java.util.*
 
 object Util {
@@ -19,5 +20,20 @@ object Util {
         seconds = elapsedSeconds
         val f = Formatter(StringBuilder(8), Locale.getDefault())
         return f.format("%02d:%02d", minutes, seconds).toString()
+    }
+
+    fun getMaxValue(arr: ByteArray, buffer: ByteBuffer): Short {
+        var max: Short = 0
+        var cur: Short = 0
+        for (i in arr.indices step 2) {
+            buffer.clear()
+            buffer.put(arr[i])
+            buffer.put(arr[i + 1])
+            cur = buffer.getShort(0)
+            if (abs(cur) > abs(max)) {
+                max = cur
+            }
+        }
+        return max
     }
 }

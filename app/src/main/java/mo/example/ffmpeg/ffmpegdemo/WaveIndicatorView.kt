@@ -17,6 +17,7 @@ class WaveIndicatorView(context: Context, attrs: AttributeSet) : View(context, a
     }
 
     var showIndicatorHeader = true
+    var showSelectedRect = false
     var listener: OnIndicatorMoveListener? = null
 
     private var mWidth = 0
@@ -28,8 +29,10 @@ class WaveIndicatorView(context: Context, attrs: AttributeSet) : View(context, a
     private var mDensity = 0f
     private var mText = ""
     private var mEndsX = 0F
+    private var mMinX = 0F
 
     private val mIndicatorLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val mSelectedRectPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val mIndicatorTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
 
     init {
@@ -37,6 +40,8 @@ class WaveIndicatorView(context: Context, attrs: AttributeSet) : View(context, a
         mIndicatorLinePaint.color = Color.parseColor("#FF7566")
         mIndicatorLinePaint.strokeWidth = mDensity * 2
         mIndicatorLinePaint.strokeCap = Paint.Cap.ROUND
+
+        mSelectedRectPaint.color = Color.parseColor("#1AFF7566")
 
         mIndicatorCircleRadius = mDensity * 6
         mIndicatorHeaderHeight = mDensity * 35
@@ -55,9 +60,12 @@ class WaveIndicatorView(context: Context, attrs: AttributeSet) : View(context, a
 
     // touch事件x坐标在指针左右各14dp范围内，视为点击指针
     private fun isInIndicatorRange(x: Float): Boolean =
-        x <= mEndsX && x <= mIndicatorX + mDensity * 14 && x >= mIndicatorX - mDensity * 14
+        x in mMinX..mEndsX && x <= mIndicatorX + mDensity * 14 && x >= mIndicatorX - mDensity * 14
 
     private fun drawIndicator(canvas: Canvas) {
+        if (showSelectedRect) {
+            canvas.drawRect(mIndicatorX, mIndicatorHeaderHeight, mWidth.toFloat(), mHeight.toFloat(), mSelectedRectPaint)
+        }
         canvas.drawLine(
             mIndicatorX,
             if (showIndicatorHeader) mIndicatorHeaderHeight - mIndicatorCircleToWaveTop else mIndicatorHeaderHeight,
@@ -78,16 +86,24 @@ class WaveIndicatorView(context: Context, attrs: AttributeSet) : View(context, a
     }
 
     fun setIndicatorText(txt: String) {
-        mText = txt
+        if (mText != txt) {
+            mText = txt
+        }
     }
 
     fun setEndsX(pixel: Float) {
         mEndsX = pixel
     }
 
+    fun setMinX(pixel: Float) {
+        mMinX = pixel
+    }
+
     fun setIndicatorX(pixel: Float) {
         mIndicatorX = pixel
     }
+
+    fun getIndicatorX():Float = mIndicatorX
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event == null) {
@@ -129,7 +145,7 @@ class WaveIndicatorView(context: Context, attrs: AttributeSet) : View(context, a
         mWidth = w
         mHeight = h
         mEndsX = w.toFloat()
-        mIndicatorX = 0f // 指针起始位置
+        mIndicatorX = w * 0.85f // 指针起始位置
     }
 
     interface OnIndicatorMoveListener {

@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import fm.qingting.audioeditor.IAudioRecorder
 
@@ -13,7 +12,7 @@ class WaveformView(context: Context, attrs: AttributeSet) : View(context, attrs)
 
     companion object {
         private const val TAG = "WaveformView"
-        const val SAMPLE_RATE = 1024 // 每1024个点选一个最大的画波形
+        const val SAMPLE_RATE = 4900
     }
 
     private var mWidth = 0
@@ -23,11 +22,12 @@ class WaveformView(context: Context, attrs: AttributeSet) : View(context, attrs)
     private var mDensity = 0f
     private var mLineSpacing = 0f
     private var mSelectedX = 0f
+    private var mRateY = 0.1f
 
     private val mWaveLineSelectedPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val mWaveLineUnSelectedPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val mWaveRectLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val mShortData = mutableListOf<Short>()
+    private val mLineHeight = mutableListOf<Short>()
 
     init {
         mDensity = context.resources.displayMetrics.density
@@ -59,21 +59,17 @@ class WaveformView(context: Context, attrs: AttributeSet) : View(context, attrs)
     }
 
     private fun drawWaveform(canvas: Canvas) {
-        val rateY = mWaveRectHeight / 65535
-        var lineHeight: Float
+        var halfLineHeight: Float
         var x: Float
         val baseLine = mWaveRectHeight / 2 + mIndicatorHeaderHeight
-        for (index in mShortData.indices) {
-            lineHeight = Util.abs(mShortData[index]) * 2 * rateY
-            if (lineHeight < 1) {
-                lineHeight = 1f
-            }
+        for (index in mLineHeight.indices) {
             x = index * mWaveLineSelectedPaint.strokeWidth + index * mLineSpacing
+            halfLineHeight = mLineHeight[index] / 2f
             canvas.drawLine(
                 x,
-                baseLine - lineHeight / 2,
+                baseLine - halfLineHeight,
                 x,
-                baseLine + lineHeight / 2,
+                baseLine + halfLineHeight,
                 if (x <= mSelectedX) mWaveLineSelectedPaint else mWaveLineUnSelectedPaint
             )
         }
@@ -84,38 +80,45 @@ class WaveformView(context: Context, attrs: AttributeSet) : View(context, attrs)
     }
 
     fun setAudioData(arr: List<Short>) {
-        mShortData.clear()
-        mShortData.addAll(arr)
-        if (mWidth > 0 && mShortData.size * 1 * mDensity > mWidth) {
+        mLineHeight.clear()
+        var lineHeight:Short = 0
+        for (sh in arr) {
+            lineHeight = (Util.abs(sh) * 2 * mRateY).toShort()
+            if (lineHeight < 1) {
+                lineHeight = 1
+            }
+            mLineHeight.add(lineHeight)
+        }
+        if (mWidth > 0 && mLineHeight.size * 1 * mDensity > mWidth) {
             // 缩小波形线宽
-            val lineWidth = mWidth * 1.0f / mShortData.size
-            Log.e(TAG, "set line width: $lineWidth")
+            val lineWidth = mWidth * 1.0f / mLineHeight.size
             mWaveLineSelectedPaint.strokeWidth = lineWidth / 2
             mWaveLineUnSelectedPaint.strokeWidth = lineWidth / 2
             mLineSpacing = lineWidth / 2
         }
+
         postInvalidate()
     }
 
     fun getWaveWidth(): Float {
-        return mShortData.size * (mWaveLineSelectedPaint.strokeWidth + mLineSpacing)
+        return mLineHeight.size * (mWaveLineSelectedPaint.strokeWidth + mLineSpacing)
     }
 
-    fun pixelsToMs(pixel: Float):Long {
+    fun pixelToMs(pixel: Float):Long {
         // 计算原始数据长度(bytes)
-        val totalRawDataLength = mShortData.size * 2 * SAMPLE_RATE
+        val totalRawDataLength = mLineHeight.size * 2 * SAMPLE_RATE
         // 每秒数据长度(bytes) = 采样率*通道数*16/8
         val bytesPerSeconds = IAudioRecorder.DEFAULT_SAMPLE_RATE * 1 * 16 / 8
         // 计算总时长 = 原始数据长度 / 每秒数据长度
-        val duration = 1000 * totalRawDataLength / bytesPerSeconds
-        return ((pixel / (mShortData.size * (mWaveLineSelectedPaint.strokeWidth + mLineSpacing))) * duration).toLong()
+        val duration = 1000L * totalRawDataLength / bytesPerSeconds
+        return ((pixel / (mLineHeight.size * (mWaveLineSelectedPaint.strokeWidth + mLineSpacing))) * duration).toLong()
     }
 
     fun msToPixels(ms: Long): Float {
-        val totalRawDataLength = mShortData.size * 2 * SAMPLE_RATE
+        val totalRawDataLength = mLineHeight.size * 2 * SAMPLE_RATE
         val bytesPerSeconds = IAudioRecorder.DEFAULT_SAMPLE_RATE * 1 * 16 / 8
-        val duration = 1000 * totalRawDataLength / bytesPerSeconds
-        return (ms * 1.0f / duration) * mShortData.size * (mWaveLineSelectedPaint.strokeWidth + mLineSpacing)
+        val duration = 1000L * totalRawDataLength / bytesPerSeconds
+        return (ms * 1.0f / duration) * mLineHeight.size * (mWaveLineSelectedPaint.strokeWidth + mLineSpacing)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -123,9 +126,10 @@ class WaveformView(context: Context, attrs: AttributeSet) : View(context, attrs)
         mWidth = w
         mHeight = h
         mWaveRectHeight = mHeight - mIndicatorHeaderHeight
-        if (mShortData.size > 0 && mShortData.size * 1 * mDensity > mWidth) {
+        mRateY = (mHeight - mIndicatorHeaderHeight) / 65535
+        if (mLineHeight.size > 0 && mLineHeight.size * 1 * mDensity > mWidth) {
             // 缩小波形线宽
-            val lineWidth = mWidth * 1.0f / mShortData.size
+            val lineWidth = mWidth * 1.0f / mLineHeight.size
             mWaveLineSelectedPaint.strokeWidth = lineWidth / 2
             mWaveLineUnSelectedPaint.strokeWidth = lineWidth / 2
             mLineSpacing = lineWidth / 2

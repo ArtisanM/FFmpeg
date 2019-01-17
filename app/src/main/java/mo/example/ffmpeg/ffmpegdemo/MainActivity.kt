@@ -93,7 +93,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun crop(view: View) {
-        FFmpegUtil.cropAudio(file, out, 30 * 1000, 10, listener)
+        FFmpegUtil.cutAudioWithSameFormat(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "m_1547691621606.m4a"), out, 30500, listener)
     }
 
     fun mix(view: View) {
@@ -123,12 +123,15 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("CheckResult")
     fun goPlay(view: View) {
-        audioRecord.getAudio().observeOn(AndroidSchedulers.mainThread()).subscribe({
-            startActivity(Intent(this, ShiTingActivity::class.java).putExtra("file", it))
-        }, { t ->
-            t.printStackTrace()
-            Toast.makeText(this, "获取音频失败", Toast.LENGTH_SHORT).show()
-        })
+//        audioRecord.getAudio().observeOn(AndroidSchedulers.mainThread()).subscribe({
+//            startActivity(Intent(this, ShiTingActivity::class.java).putExtra("file", it))
+//        }, { t ->
+//            t.printStackTrace()
+//            Toast.makeText(this, "获取音频失败", Toast.LENGTH_SHORT).show()
+//        })
+
+//        startActivity(Intent(this, ShiTingActivity::class.java).putExtra("file", File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "m_1547626485779.m4a")))
+        startActivity(Intent(this, ShiTingActivity::class.java).putExtra("file", File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "m_1547691621606.m4a")))
     }
 
     fun goCrop(view: View) {
@@ -139,9 +142,12 @@ class MainActivity : AppCompatActivity() {
             t.printStackTrace()
             Toast.makeText(this, "获取音频失败", Toast.LENGTH_SHORT).show()
         })
+
     }
 
-
+    fun goCropExist(view: View) {
+        startActivity(Intent(this, CropActivity::class.java).putExtra("file", File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "m_1547691621606.m4a")))
+    }
 
     @SuppressLint("CheckResult")
     fun saveAudio(view: View) {

@@ -2,7 +2,6 @@ package fm.qingting.audioeditor
 
 import android.media.MediaMetadataRetriever
 import java.io.File
-import java.util.*
 
 object FFmpegUtil {
 
@@ -37,7 +36,7 @@ object FFmpegUtil {
 
     /**
      * startTime: ms
-     * duration: s
+     * duration: ms
      */
     fun cropAudio(
         srcFile: File,
@@ -59,20 +58,20 @@ object FFmpegUtil {
         cmd.add("-ss")
         cmd.add(formatElapsedTime(startTime))
         cmd.add("-t")
-        cmd.add(duration.toString())
+        cmd.add(formatElapsedTime(duration))
         cmd.add("-vn")
         cmd.add("-vsync")
         cmd.add("2")
         cmd.add(outputFile.absolutePath)
 
-        FFmpegCmd.exec(cmd.toTypedArray(), duration * 1000, listener)
+        FFmpegCmd.exec(cmd.toTypedArray(), duration, listener)
     }
 
     /**
      * 裁剪文件，要求输入文件与输出文件格式相同
      * 加入-c copy参数，省略了codec过程，速度更快
      * startTime: ms
-     * duration: s
+     * duration: ms
      */
     fun cropAudioWithSameFormat(
         srcFile: File,
@@ -95,7 +94,7 @@ object FFmpegUtil {
         cmd.add("-ss")
         cmd.add(formatElapsedTime(startTime))
         cmd.add("-t")
-        cmd.add(duration.toString())
+        cmd.add(formatElapsedTime(duration))
         cmd.add("-vn")
         cmd.add("-vsync")
         cmd.add("2")
@@ -103,7 +102,48 @@ object FFmpegUtil {
         cmd.add("copy")
         cmd.add(outputFile.absolutePath)
 
-        FFmpegCmd.exec(cmd.toTypedArray(), duration * 1000, listener)
+        FFmpegCmd.exec(cmd.toTypedArray(), duration, listener)
+    }
+
+    /**
+     * 裁剪文件from startTime to end，要求输入文件与输出文件格式相同
+     * 加入-c copy参数，省略了codec过程，速度更快
+     * startTime: ms
+     */
+    fun cutAudioWithSameFormat(
+        srcFile: File,
+        outputFile: File,
+        startTime: Long,
+        listener: FFmpegCmd.OnCmdExecListener
+    ) {
+        if (outputFile.exists()) {
+            outputFile.delete()
+        }
+        if (!srcFile.exists()) {
+            listener.onFailure()
+            return
+        }
+
+        //get duration for calc ffmpeg progress
+        val mediaMetadataRetriever = MediaMetadataRetriever()
+        mediaMetadataRetriever.setDataSource(srcFile.absolutePath)
+        val duration =
+            mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() // ms
+        mediaMetadataRetriever.release()
+
+        val cmd = CmdList()
+        cmd.add("-i")
+        cmd.add(srcFile.absolutePath)
+        cmd.add("-ss")
+        cmd.add(formatElapsedTime(startTime))
+        cmd.add("-vn")
+        cmd.add("-vsync")
+        cmd.add("2")
+        cmd.add("-c")
+        cmd.add("copy")
+        cmd.add(outputFile.absolutePath)
+
+        FFmpegCmd.exec(cmd.toTypedArray(), duration - startTime, listener)
     }
 
     /**
@@ -282,21 +322,10 @@ object FFmpegUtil {
         FFmpegCmd.exec(cmd.toTypedArray(), outputFileDuration, listener)
     }
 
+    /**
+     * @param time: ms
+     */
     private fun formatElapsedTime(time: Long): String {
-        var elapsedSeconds = time / 1000
-        var hours: Long = 0
-        var minutes: Long = 0
-        var seconds: Long = 0
-        if (elapsedSeconds >= 3600) {
-            hours = elapsedSeconds / 3600
-            elapsedSeconds -= hours * 3600
-        }
-        if (elapsedSeconds >= 60) {
-            minutes = elapsedSeconds / 60
-            elapsedSeconds -= minutes * 60
-        }
-        seconds = elapsedSeconds
-        val f = Formatter(StringBuilder(8), Locale.getDefault())
-        return f.format("%02d:%02d:%02d", hours, minutes, seconds).toString()
+        return String.format("%.3f", time / 1000f)
     }
 }
