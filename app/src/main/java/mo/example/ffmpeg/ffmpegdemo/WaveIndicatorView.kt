@@ -6,14 +6,13 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.text.TextPaint
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 
 class WaveIndicatorView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     companion object {
-        private const val TAG = "WaveformView"
+        private const val TAG = "WaveIndicatorView"
     }
 
     var showIndicatorHeader = true
@@ -58,9 +57,19 @@ class WaveIndicatorView(context: Context, attrs: AttributeSet) : View(context, a
         }
     }
 
-    // touch事件x坐标在指针左右各14dp范围内，视为点击指针
-    private fun isInIndicatorRange(x: Float): Boolean =
+    // touch down事件x坐标在指针左右各14dp范围内，视为点击指针
+    private fun isInIndicatorDownRange(x: Float): Boolean =
         x in mMinX..mEndsX && x <= mIndicatorX + mDensity * 14 && x >= mIndicatorX - mDensity * 14
+
+    // touch move up事件x坐标在波形范围内即可
+    private fun isInIndicatorMoveRange(x: Float): Boolean =
+        x in mMinX..mEndsX
+
+    private fun trap(x: Float): Float {
+        if (x < mMinX)
+            return mMinX
+        return if (x > mEndsX) mEndsX else x
+    }
 
     private fun drawIndicator(canvas: Canvas) {
         if (showSelectedRect) {
@@ -110,10 +119,9 @@ class WaveIndicatorView(context: Context, attrs: AttributeSet) : View(context, a
             return super.onTouchEvent(event)
         }
         val x = event.x
-        Log.e(TAG, "indicator touch x: $x")
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                if (isInIndicatorRange(x)) {
+                if (isInIndicatorDownRange(x)) {
                     mIndicatorX = x
                     invalidate()
                     listener?.onIndicatorMoveStart(x)
@@ -121,7 +129,7 @@ class WaveIndicatorView(context: Context, attrs: AttributeSet) : View(context, a
                 }
             }
             MotionEvent.ACTION_MOVE -> {
-                if (isInIndicatorRange(x)) {
+                if (isInIndicatorMoveRange(x)) {
                     mIndicatorX = x
                     invalidate()
                     listener?.onIndicatorMoved(x)
@@ -129,12 +137,13 @@ class WaveIndicatorView(context: Context, attrs: AttributeSet) : View(context, a
                 }
             }
             MotionEvent.ACTION_UP -> {
-                if (isInIndicatorRange(x)) {
+                if (isInIndicatorMoveRange(x)) {
                     mIndicatorX = x
                     invalidate()
-                    listener?.onIndicatorMoveUp(x)
-                    return true
                 }
+                // up事件一定得要回调给外界，但是传出去的x坐标用实际指针位置
+                listener?.onIndicatorMoveUp(trap(x))
+                return true
             }
         }
         return super.onTouchEvent(event)

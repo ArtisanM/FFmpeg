@@ -161,7 +161,7 @@ class MainActivity : AppCompatActivity() {
 
     fun onClickCached(view: View) {
         for (file in Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).listFiles()) {
-            if (file.isFile && file.name.startsWith("m_")) {
+            if (file.isFile && (file.name.startsWith("m_") || file.name.startsWith("qt_record_"))) {
                 file.delete()
             }
         }

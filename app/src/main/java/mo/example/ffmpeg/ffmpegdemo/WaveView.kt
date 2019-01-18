@@ -107,6 +107,11 @@ class WaveView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 if (stopY > mViewHeight - mLineVerticalSpace) {
                     stopY = (mViewHeight - mLineVerticalSpace)
                 }
+                if (startY == stopY) {
+                    // 部分机型y坐标相同时不会画点
+                    startY -= 0.5f
+                    stopY += 0.5f
+                }
                 canvas.drawLine(x, startY, x, stopY, mPaint)
             }
         }

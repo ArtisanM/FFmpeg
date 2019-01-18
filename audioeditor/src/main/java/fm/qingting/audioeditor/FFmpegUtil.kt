@@ -106,14 +106,14 @@ object FFmpegUtil {
     }
 
     /**
-     * 裁剪文件from startTime to end，要求输入文件与输出文件格式相同
+     * 裁剪文件from 0 to endTime，要求输入文件与输出文件格式相同
      * 加入-c copy参数，省略了codec过程，速度更快
      * startTime: ms
      */
     fun cutAudioWithSameFormat(
         srcFile: File,
         outputFile: File,
-        startTime: Long,
+        endTime: Long,
         listener: FFmpegCmd.OnCmdExecListener
     ) {
         if (outputFile.exists()) {
@@ -124,18 +124,11 @@ object FFmpegUtil {
             return
         }
 
-        //get duration for calc ffmpeg progress
-        val mediaMetadataRetriever = MediaMetadataRetriever()
-        mediaMetadataRetriever.setDataSource(srcFile.absolutePath)
-        val duration =
-            mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() // ms
-        mediaMetadataRetriever.release()
-
         val cmd = CmdList()
         cmd.add("-i")
         cmd.add(srcFile.absolutePath)
-        cmd.add("-ss")
-        cmd.add(formatElapsedTime(startTime))
+        cmd.add("-to")
+        cmd.add(formatElapsedTime(endTime))
         cmd.add("-vn")
         cmd.add("-vsync")
         cmd.add("2")
@@ -143,7 +136,7 @@ object FFmpegUtil {
         cmd.add("copy")
         cmd.add(outputFile.absolutePath)
 
-        FFmpegCmd.exec(cmd.toTypedArray(), duration - startTime, listener)
+        FFmpegCmd.exec(cmd.toTypedArray(), endTime, listener)
     }
 
     /**
