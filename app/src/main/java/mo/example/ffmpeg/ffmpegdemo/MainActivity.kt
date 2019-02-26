@@ -90,6 +90,8 @@ class MainActivity : AppCompatActivity() {
                 wavesfv.addAudioData(audioData, readSize)
             }
         })
+
+//        FFmpegUtil.resample2Pcm(file, File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RightNow.raw"), listener)
     }
 
     fun crop(view: View) {
@@ -102,6 +104,10 @@ class MainActivity : AppCompatActivity() {
 
     fun concat(view: View) {
         FFmpegUtil.concatAudio(out, listener, file, file2)
+    }
+
+    fun goPcmPlayer(view: View) {
+        startActivity(Intent(this, PcmPlayerActivity::class.java))
     }
 
     fun play(view: View) {
