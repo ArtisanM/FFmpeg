@@ -19,6 +19,7 @@ import fm.qingting.audioeditor.AudioRecorderImpl
 import fm.qingting.audioeditor.FFmpegUtil
 import fm.qingting.audioeditor.IAudioRecorder
 import fm.qingting.audioeditor.OnAudioRecordListener
+import fm.qingting.audioeditor.PcmPlayer
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
+    val pcmPlayer = PcmPlayer()
     private var granted = false
     private val mediaPlayer = MediaPlayer()
     private var audioRecord: IAudioRecorder = AudioRecorderImpl()
@@ -56,6 +58,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvTotal: TextView
     private lateinit var wavesfv: WaveView
 
+    @SuppressLint("CheckResult")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -91,7 +94,40 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-//        FFmpegUtil.resample2Pcm(file, File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RightNow.raw"), listener)
+//        Completable.fromAction {
+//            val file1 = File(
+//                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+//                "track1.wav"
+//            )
+//            val file2 = File(
+//                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+//                "track2.wav"
+//            )
+//            val inputStream1 = FileInputStream(file1)
+//            val inputStream2 = FileInputStream(file2)
+//            val output = File(
+//                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+//                "trackMix.pcm"
+//            )
+//            output.delete()
+//            val out = FileOutputStream(output)
+//
+//            //skip header
+//            val byteArr = ByteArray(44)
+//            inputStream1.read(byteArr)
+//            inputStream2.read(byteArr)
+//
+//            val mixer = AudioAverageMixer()
+//
+//            val buffer = Array(2){ ByteArray(IAudioRecorder.MIN_IN_BUFFER_SIZE)}
+//            val ret = IntArray(2)
+//            while (({ ret[0] = inputStream1.read(buffer[0]) ; ret[0]}() != -1)
+//                or ({ ret[1] = inputStream2.read(buffer[1]) ;ret[1]}() != -1)){
+//                val result = mixer.mix(buffer, ret, floatArrayOf(2f, 2f))
+//                out.write(buffer[0], 0, result)
+//            }
+//        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe()
+
     }
 
     fun crop(view: View) {
@@ -111,16 +147,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play(view: View) {
-        if (mediaPlayer.isPlaying) {
-            mediaPlayer.stop()
-            mediaPlayer.reset()
-        } else {
-            val intent = Intent()
-                .setType("*/*")
-                .setAction(Intent.ACTION_GET_CONTENT)
-
-            startActivityForResult(Intent.createChooser(intent, "Select a file"), 123)
-        }
+//        if (mediaPlayer.isPlaying) {
+//            mediaPlayer.stop()
+//            mediaPlayer.reset()
+//        } else {
+//            val intent = Intent()
+//                .setType("*/*")
+//                .setAction(Intent.ACTION_GET_CONTENT)
+//
+//            startActivityForResult(Intent.createChooser(intent, "Select a file"), 123)
+//        }
+        pcmPlayer.reset()
+        pcmPlayer.setDataSource(File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            "trackMix.pcm"
+        ).absolutePath)
+        pcmPlayer.start()
     }
 
     fun startRecord(view: View) {
@@ -257,6 +299,7 @@ class MainActivity : AppCompatActivity() {
         mediaPlayer.release()
         audioRecord.release()
         wavesfv.clearData()
+        pcmPlayer.release()
     }
 
     private fun getDurationString(seconds: Int): String {
