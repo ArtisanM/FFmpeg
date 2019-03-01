@@ -5,12 +5,6 @@ import android.media.MediaRecorder
 import io.reactivex.Observable
 import java.io.File
 
-/**
- * v1.0功能：
- * 录音（可分段）
- * 裁剪
- * 录音片段拼接（pause时与上一个录音wav拼接并存为一个wav）
- */
 interface IAudioRecorder {
 
     companion object {
@@ -19,6 +13,7 @@ interface IAudioRecorder {
         const val DEFAULT_CHANNEL_IN_CONFIG = AudioFormat.CHANNEL_IN_MONO
         const val DEFAULT_CHANNEL_OUT_CONFIG = AudioFormat.CHANNEL_OUT_MONO
         const val DEFAULT_AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+
         val MIN_IN_BUFFER_SIZE = android.media.AudioRecord.getMinBufferSize(
             DEFAULT_SAMPLE_RATE,
             DEFAULT_CHANNEL_IN_CONFIG,
@@ -29,6 +24,10 @@ interface IAudioRecorder {
             DEFAULT_CHANNEL_OUT_CONFIG,
             DEFAULT_AUDIO_FORMAT
         )
+        // 录音时每个buff时长(单位nano) = BUFFER_TIME_UNIT_MILL * 1000000 + BUFFER_TIME_UNIT_NANO
+        val BUFFER_TIME_UNIT_MILL = 1000L * MIN_IN_BUFFER_SIZE / 2 / IAudioRecorder.DEFAULT_SAMPLE_RATE;
+        val BUFFER_TIME_UNIT_NANO =
+            ((1000 * 1000 * 1000L * MIN_IN_BUFFER_SIZE / 2 / IAudioRecorder.DEFAULT_SAMPLE_RATE) - BUFFER_TIME_UNIT_MILL * 1000 * 1000L).toInt()
     }
 
     fun isRecording(): Boolean
@@ -60,7 +59,9 @@ interface IAudioRecorder {
 
     fun setOnAudioRecordListener(listener: OnAudioRecordListener)
 
-//    fun addAudioTrack(file: File): Track
+    fun addAudioTrack(file: File): ITrack
+
+    fun removeAudioTrack(file: File)
 }
 
 interface OnAudioRecordListener {
@@ -68,62 +69,30 @@ interface OnAudioRecordListener {
 }
 
 /**
- * v2.0 背景音乐功能 未完成
+ * v2.0 音轨
+ * 音轨格式必须为 44100Hz, pcm s16le, mono
  */
-//data class Track(val file: File) {
-//
-//    private var mAudioPlayer: AudioPlayer? = null
-//    private var mWavFileReader: WavFileReader? = null
-//    @Volatile
-//    private var mIsPlaying = false
-//    private var mVolume: Float = 1f
-//
-//    fun play() {
-//        mAudioPlayer?.let {
-//            it.stopPlayer()
-//            mAudioPlayer = null
-//        }
-//        mAudioPlayer = AudioPlayer()
-//        mAudioPlayer?.startPlayer()
-//
-//        mWavFileReader = WavFileReader()
-//        mWavFileReader?.openFile(file.absolutePath)
-//
-//        mIsPlaying = true
-//
-//        Thread(Runnable {
-//            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO)
-//            val buffer = ByteArray(MIN_OUT_BUFFER_SIZE)
-//            while (mIsPlaying && mWavFileReader?.readData(buffer, 0, buffer.size)!! > 0) {
-//                AudioUtils.adjustVolume(buffer, mVolume)
-//                mAudioPlayer?.play(buffer, 0, buffer.size)
-//                Arrays.fill(buffer, 0)
-//            }
-//            mAudioPlayer?.stopPlayer()
-//            mAudioPlayer = null
-//            mIsPlaying = false
-//            try {
-//                mWavFileReader?.closeFile()
-//            } catch (e: IOException) {
-//                e.printStackTrace()
-//            }
-//            mWavFileReader = null
-//        }).start()
-//    }
-//
-//    fun stop() {
-//        mIsPlaying = false
-//        mAudioPlayer?.stopPlayer()
-//        mAudioPlayer = null
-//        try {
-//            mWavFileReader?.closeFile()
-//        } catch (e: IOException) {
-//            e.printStackTrace()
-//        }
-//        mWavFileReader = null
-//    }
-//
-//    fun setVolume(volume: Float) {
-//        mVolume = if (volume > 2) 2f else (if (volume < 0) 0f else volume)
-//    }
-//}
+interface ITrack {
+
+    fun stopPlay()
+
+    fun startPlay()
+
+    fun playAudioData(audioData: ByteArray, offsetInBytes: Int, sizeInBytes: Int)
+
+    fun readAudioData(): AudioData
+
+    fun isPlaying():Boolean
+
+    fun setIsLoop(isLoop: Boolean)
+
+    fun isLoop(): Boolean
+
+    fun getVolume(): Float
+
+    fun setVolume(volume: Float)
+
+    fun release()
+}
+
+data class AudioData(var buffer: ByteArray, var len: Int)

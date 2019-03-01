@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 /**
- * 混音之线性叠加平均算法，直接加和并且钳位
+ * 混音之线性叠加算法，直接加和并且钳位。
  */
 class AudioAverageMixer : IAudioMixer {
 
@@ -20,6 +20,10 @@ class AudioAverageMixer : IAudioMixer {
             for (i in 0 until data.size) {
                 it[i] = 1f
             }
+        }
+        // 数组size跟别的不匹配
+        if (lengthArray.size != data.size || volumes.size != lengthArray.size || volumes.size != data.size) {
+            return lengthArray[0]
         }
         // 限制音量调节范围
         trapVolume(volumes)
@@ -40,8 +44,8 @@ class AudioAverageMixer : IAudioMixer {
                     mConvertBuffer.clear()
                     mConvertBuffer.put(data[trackIndex][i])
                     mConvertBuffer.put(data[trackIndex][i + 1])
-                    // 先乘以音量，再平均，最后叠加
-                    short = (short + mConvertBuffer.getShort(0) * volumes[trackIndex] / data.size).toInt()
+                    // 先乘以音量，再叠加
+                    short = (short + mConvertBuffer.getShort(0) * volumes[trackIndex]).toInt()
                 }
             }
             // 检查溢出

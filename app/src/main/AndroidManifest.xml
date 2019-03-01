@@ -12,7 +12,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".PcmPlayerActivity">
+        <activity android:name=".MixActivity"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".PcmPlayerActivity"
+            android:screenOrientation="portrait">
         </activity>
 
         <meta-data

@@ -131,7 +131,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun crop(view: View) {
-        FFmpegUtil.cutAudioWithSameFormat(File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "m_1547691621606.m4a"), out, 30500, listener)
+        FFmpegUtil.cutAudioWithSameFormat(
+            File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "m_1547691621606.m4a"
+            ), out, 30500, listener
+        )
     }
 
     fun mix(view: View) {
@@ -147,22 +152,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play(view: View) {
-//        if (mediaPlayer.isPlaying) {
-//            mediaPlayer.stop()
-//            mediaPlayer.reset()
-//        } else {
-//            val intent = Intent()
-//                .setType("*/*")
-//                .setAction(Intent.ACTION_GET_CONTENT)
-//
-//            startActivityForResult(Intent.createChooser(intent, "Select a file"), 123)
-//        }
-        pcmPlayer.reset()
-        pcmPlayer.setDataSource(File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            "trackMix.pcm"
-        ).absolutePath)
-        pcmPlayer.start()
+        if (mediaPlayer.isPlaying) {
+            mediaPlayer.stop()
+            mediaPlayer.reset()
+        } else {
+            val intent = Intent()
+                .setType("*/*")
+                .setAction(Intent.ACTION_GET_CONTENT)
+
+            startActivityForResult(Intent.createChooser(intent, "Select a file"), 123)
+        }
+
+
     }
 
     fun startRecord(view: View) {
@@ -193,8 +194,21 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    fun goMix(view: View) {
+        val intent = Intent(this, MixActivity::class.java)
+        startActivity(intent)
+    }
+
     fun goCropExist(view: View) {
-        startActivity(Intent(this, CropActivity::class.java).putExtra("file", File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "m_1547691621606.m4a")))
+        startActivity(
+            Intent(this, CropActivity::class.java).putExtra(
+                "file",
+                File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    "m_1547691621606.m4a"
+                )
+            )
+        )
     }
 
     @SuppressLint("CheckResult")
