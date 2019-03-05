@@ -3,6 +3,9 @@ package fm.qingting.audioeditor
 import android.media.MediaMetadataRetriever
 import java.io.File
 
+/**
+ * ffmpegCmd不支持并行执行
+ */
 object FFmpegUtil {
 
     /**

@@ -26,6 +26,8 @@ class AudioRecorderImpl : IAudioRecorder {
     }
 
     private var mAudioRecord: AudioRecord? = null
+    @Volatile
+    private var mRecordRunnable: AudioCaptureRunnable? = null
     private var mWorkThread = Executors.newSingleThreadExecutor()
     @Volatile
     private var mIsCaptureStarted = false
@@ -48,7 +50,17 @@ class AudioRecorderImpl : IAudioRecorder {
         mAudioRecord?.let {
             if (it.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
                 it.stop()
-//                mIsCaptureStarted = false
+                var started = false
+                mTracks.forEach {track ->
+                    if (track.isRecordingTrack()) {
+                        started = true
+                        return@forEach
+                    }
+                }
+                if (!started) {
+                    // 没有其他正在录制的音轨
+                    mIsCaptureStarted = false
+                }
             }
         }
     }
@@ -63,37 +75,45 @@ class AudioRecorderImpl : IAudioRecorder {
                     mOutputStream = FileOutputStream(mOutputTempFile)
                 }
 
-                mWorkThread.execute(AudioCaptureRunnable())
+                if (mRecordRunnable == null) {
+                    mRecordRunnable = AudioCaptureRunnable()
+                    mWorkThread.execute(mRecordRunnable)
+                }
             }
         }
     }
 
     override fun startRecord() {
-        mAudioRecord = AudioRecord(
-            IAudioRecorder.DEFAULT_SOURCE,
-            IAudioRecorder.DEFAULT_SAMPLE_RATE,
-            IAudioRecorder.DEFAULT_CHANNEL_IN_CONFIG,
-            IAudioRecorder.DEFAULT_AUDIO_FORMAT,
-            IAudioRecorder.MIN_IN_BUFFER_SIZE
-        )
-        if (mAudioRecord!!.state == AudioRecord.STATE_UNINITIALIZED) {
-            Log.e(TAG, "AudioRecord initialize fail !")
-            return
-        }
-        if (mOutputFile.exists()) {
-            mOutputFile.delete()
-        }
-        if (mOutputTempFile.exists()) {
-            mOutputTempFile.delete()
-        }
+        if (mAudioRecord == null) {
+            mAudioRecord = AudioRecord(
+                IAudioRecorder.DEFAULT_SOURCE,
+                IAudioRecorder.DEFAULT_SAMPLE_RATE,
+                IAudioRecorder.DEFAULT_CHANNEL_IN_CONFIG,
+                IAudioRecorder.DEFAULT_AUDIO_FORMAT,
+                IAudioRecorder.MIN_IN_BUFFER_SIZE
+            )
+            if (mAudioRecord!!.state == AudioRecord.STATE_UNINITIALIZED) {
+                Log.e(TAG, "AudioRecord initialize fail !")
+                return
+            }
+            if (mOutputFile.exists()) {
+                mOutputFile.delete()
+            }
+            if (mOutputTempFile.exists()) {
+                mOutputTempFile.delete()
+            }
 
-        mOutputStream?.close()
-        mOutputStream = FileOutputStream(mOutputTempFile)
-        mAudioRecord!!.startRecording()
+            mOutputStream?.close()
+            mOutputStream = FileOutputStream(mOutputTempFile)
+            mAudioRecord!!.startRecording()
+        }
 
         mIsCaptureStarted = true
 
-        mWorkThread.execute(AudioCaptureRunnable())
+        if (mRecordRunnable == null) {
+            mRecordRunnable = AudioCaptureRunnable()
+            mWorkThread.execute(mRecordRunnable)
+        }
 
         Log.d(TAG, "Start audio capture success !")
     }
@@ -104,6 +124,9 @@ class AudioRecorderImpl : IAudioRecorder {
         }
 
         mIsCaptureStarted = false
+        mTracks.forEach {track ->
+            track.stopRecord()
+        }
 
         mAudioRecord?.let {
             if (it.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
@@ -142,7 +165,7 @@ class AudioRecorderImpl : IAudioRecorder {
         for (i in mTracks.indices) {
             if (mTracks[i].file == file) {
                 mTracks[i].apply {
-                    stopPlay()
+                    stopRecord()
                     release()
                 }
                 mTracks.removeAt(i)
@@ -275,7 +298,7 @@ class AudioRecorderImpl : IAudioRecorder {
 
                     if (readed.len > 0) {
                         capturedData = true
-                        //todo 判断是否需要play
+                        //todo 根据耳机插拔情况，判断是否需要播放出来
                         tracks[index].playAudioData(readed.buffer, 0, readed.len)
                     }
                 }
@@ -298,6 +321,8 @@ class AudioRecorderImpl : IAudioRecorder {
                     Thread.sleep(IAudioRecorder.BUFFER_TIME_UNIT_MILL, IAudioRecorder.BUFFER_TIME_UNIT_NANO)
                 }
             }
+
+            mRecordRunnable = null
         }
 
         /**
@@ -323,7 +348,7 @@ class AudioRecorderImpl : IAudioRecorder {
     private inner class Track(val file: File) : HandlerThread("QtTrack:${file.name}"), ITrack {
 
         @Volatile
-        private var mIsPlaying = false
+        private var mIsRecordingTrack = false
         @Volatile
         private var mIsLoop = false
         private var started = false
@@ -355,27 +380,39 @@ class AudioRecorderImpl : IAudioRecorder {
             })
         }
 
-        override fun stopPlay() {
-            mIsPlaying = false
+        override fun stopRecord() {
+            mIsRecordingTrack = false
             mAudioTrack.pause()
             mAudioTrack.stop()
             mAudioTrack.flush()
 
-            //todo 若录音已暂停，并且无其他音轨在录，就设置recording=false
+            // 若无其他音轨录制，则暂停
+            var started = mAudioRecord?.recordingState == AudioRecord.RECORDSTATE_RECORDING
+            mTracks.forEach { track ->
+                if (track.isRecordingTrack()) {
+                    started = true
+                }
+            }
+            if (!started) {
+                mIsCaptureStarted = false
+            }
         }
 
-        override fun startPlay() {
+        override fun startRecord() {
             if (!started) {
                 start()
                 started = true
             }
             mAudioTrack.flush()
             mAudioTrack.play()
-            mIsPlaying = true
+            mIsRecordingTrack = true
 
-            //todo 若还未开始录音，则启动录音
-            if (!isRecording()) {
-
+            // 若还未开始录音，则启动录音
+            if (!mIsCaptureStarted) {
+                if (mRecordRunnable == null) {
+                    mRecordRunnable = AudioCaptureRunnable()
+                    mWorkThread.execute(mRecordRunnable)
+                }
             }
         }
 
@@ -390,8 +427,12 @@ class AudioRecorderImpl : IAudioRecorder {
         }
 
         override fun readAudioData(): AudioData {
-            if (isPlaying()) {
+            if (isRecordingTrack()) {
                 mReadBuffer.len = mStream.read(mBuffer, 0, mBuffer.size)
+                if (mReadBuffer.len == -1 && mIsLoop) {
+                    // 录完了，需要循环
+                    mStream.seek(0)
+                }
             } else {
                 mReadBuffer.len = 0
             }
@@ -399,7 +440,7 @@ class AudioRecorderImpl : IAudioRecorder {
             return mReadBuffer
         }
 
-        override fun isPlaying(): Boolean = mIsPlaying
+        override fun isRecordingTrack(): Boolean = mIsRecordingTrack
 
         override fun setIsLoop(isLoop: Boolean) {
             mIsLoop = isLoop

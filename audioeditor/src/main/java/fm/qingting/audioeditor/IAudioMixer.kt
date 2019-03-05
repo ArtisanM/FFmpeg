@@ -8,7 +8,7 @@ interface IAudioMixer {
      *
      * @param data 音轨数据数组
      * @param lengthArray 记录每个音轨数据length的数组
-     * @param volume 调节每条音轨音量大小，默认都为1，范围(0,10]
+     * @param volume 调节每条音轨音量大小，默认都为1，范围[0,10]
      *
      * @return  the total number of bytes mixed and written into the data[0]
      */

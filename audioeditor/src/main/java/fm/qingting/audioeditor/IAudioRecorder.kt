@@ -72,17 +72,18 @@ interface OnAudioRecordListener {
  * v2.0 音轨
  * 音轨格式必须为 44100Hz, pcm s16le, mono
  */
+//todo pause resume
 interface ITrack {
 
-    fun stopPlay()
+    fun stopRecord()
 
-    fun startPlay()
+    fun startRecord()
 
     fun playAudioData(audioData: ByteArray, offsetInBytes: Int, sizeInBytes: Int)
 
     fun readAudioData(): AudioData
 
-    fun isPlaying():Boolean
+    fun isRecordingTrack():Boolean
 
     fun setIsLoop(isLoop: Boolean)
 
